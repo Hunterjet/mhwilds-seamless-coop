@@ -76,7 +76,7 @@ Keep it low-volume. Nexus Mods and Reddit pages render without login; old.reddit
 ## 6. GitHub
 
 - Repository: https://github.com/Hunterjet/mhwilds-seamless-coop (public).
-- GitHub CLI is portable: `C:\src\_tools\gh`. Always call it through **`tools\dev\gh.ps1`**, which keeps its config
+- GitHub CLI is installed system-wide (`C:\Program Files\GitHub CLI\gh.exe`). For this project call it through **`tools\dev\gh.ps1`**, which keeps its config
   in `C:\src\.cache\gh` instead of the user profile. The login token lives in Windows Credential Manager (gh's keyring
   entry). It was approved for this repository's work only. Sign out with `tools\dev\gh.ps1 auth logout`.
 - This repo's local git config resets inherited credential helpers and uses only the gh login, so pushes never touch
