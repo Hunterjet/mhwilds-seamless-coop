@@ -66,6 +66,8 @@ It is inspired by [Elden Ring Seamless Co-op](https://www.nexusmods.com/eldenrin
 | **Helper** | A follower who has already **cleared** the leader's story quest. |
 | **Gate** | The point at which vanilla lets other players join (the quest becomes SOS/Link-joinable). |
 | **Segment** | A pre-gate part of a story quest: *Travel*, *Talk*, *Investigate*, *Skirmish*, *Cutscene*; then *Hunt* and *Results*. |
+| **Main mission** | A main story mission (`MissionTypeList.MAINSTORY`, IDs `MISSION_00CNNN`): a chain of objectives (talk to NPCs, travel, investigate, small monsters, cutscenes). Many missions also **wrap a hunting quest**. In this spec, **"story quest" means the whole main mission**, not only its hunt. |
+| **Hunting quest** | The quest wrapped inside a main mission (`MissionData._QuestData`), starting at objective `_QuestStartObjectiveID`. Vanilla allows others to join (SOS / Link Party invite) only from this point. |
 | **Closed quest** | A story quest vanilla never allows others to join (e.g. tutorial hunts); see §9. |
 
 ## 6. Features
