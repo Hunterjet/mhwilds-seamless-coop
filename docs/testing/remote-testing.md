@@ -10,7 +10,7 @@
 | Who | Project developer, works with the coding agent | Volunteer tester (not a developer), different country and time zone |
 | Installs | Full dev setup ([dev-environment.md](../dev-environment.md)): REFramework nightly **+ C# API + re-engine-mcp**, toolchain | **End-user components only**: the pinned REFramework `dinput8.dll` plus our release zip (or probe scripts in Phase 1). No C# API, no re-engine-mcp, no dev tools. |
 | Access | Direct | None. Everything goes through the tester kit, a written session script, and the logs the tester sends back. |
-| Characters | Main + test characters (a "pair" character, ideally also a "probe" character) | Main + one test character |
+| Characters | Main + two test characters: **pair** (kept in step with the tester) and **probe** (solo RE work) | Main + one **pair** test character |
 
 ## Principles
 
