@@ -101,5 +101,8 @@ RenoDX and Fluffy-managed PAK/loose-file mods.
 - Revert manifest: `reframework\backups\CHANGES-seamless-coop-dev.txt`.
 - Dev machine now has: VS 2022 Build Tools (MSVC 14.44), CMake 4.4.4, Ninja 1.13.2, Python 3.13.15, .NET SDK 10.0.402,
   lua-language-server 3.19.1, clangd 23.1.0, OpenJDK 21.0.12, Ghidra 12.1.4 (+GhidraMCP 2.0) in `C:\src\_tools`.
-- **First launch after the update not yet verified** — REFramework must compile the C# plugin and the game must boot
-  cleanly (Phase 0 exit criterion).
+- **First launch verified (2026-10-21 00:13).** One-time C# reference-assembly generation took ~2.5 min (black screen):
+  `_System.Private.CoreLib` (324 types), `viacore` (6,919), `application` (94,473) → `reframework\plugins\managed\generated\`.
+  re-engine-mcp compiled and listened on `localhost:8899`; live TDB: 322,054 types, 1,970,957 methods, 711,740 fields.
+  Live singletons confirmed: `app.MissionManager`, `app.NetworkManager`, `app.CutSceneGalleryManager`, `app.DialogueManager`.
+  The generated `REFramework.NET.application.dll` is itself a typed SDK of the game (usable offline for type discovery).

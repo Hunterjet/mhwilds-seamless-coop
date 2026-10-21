@@ -25,6 +25,11 @@ Logs: `C:\src\.cache\logs\toolchain-install.log`. Downloads and package caches s
 | **re-engine-mcp** game plugin (dev only) | `reframework\plugins\source\TestWebAPI.cs` + `WebAPI\` — compiled by REFramework at launch; serves `http://localhost:8899` only. |
 
 Everything is listed in `reframework\backups\CHANGES-seamless-coop-dev.txt`.
+**First launch after installing the C# API shows a long black screen.** REFramework.NET generates .NET reference
+assemblies for the entire game type database into `reframework\plugins\managed\generated\`. This happens
+synchronously at startup and can take several minutes. It is cached (keyed by the game exe's SHA256 and the
+REFramework.NET hash) and **regenerates after every game or REFramework update**. Don't close the game during it; follow
+progress with `tools\dev\watch-reframework-log.ps1`.
 **Revert:** close the game, copy the `.bak` back to `<game>\dinput8.dll`, delete the files listed in the manifest.
 **Before normal online play:** remove `reframework\plugins\source\TestWebAPI.cs` and `WebAPI\`. The dev plugin can call
 any game method, including sending chat.
