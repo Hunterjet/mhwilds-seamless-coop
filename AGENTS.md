@@ -25,7 +25,11 @@ These rules add to `C:\src\AGENTS.md` (machine-wide rules: personal files, crede
 ## Workflow
 - GitHub: use `tools/dev/gh.ps1` (system gh with project-scoped config in `C:\src\.cache\gh`; token approved by the user for this repo).
 - Two-player testing uses a **remote tester** (PC-B, no access). Anything they must do goes into plain-language tester
-  docs and session scripts (`docs/testing/`). Never put personal details about the tester in the repo.
+  docs and session scripts (`docs/testing/`, `tools/tester-kit/`). Never put personal details about the tester in the repo.
+- Tester kit: build with `powershell -File tools/tester-kit/build-kit.ps1` (→ `C:\src\.cache\dist\`), publish as a
+  GitHub pre-release. Kit scripts must run on **Windows PowerShell 5.1**: ASCII only (no BOM → `—` breaks parsing),
+  no `Get-FileHash`/`Compress-Archive` (use the .NET helpers in `kit-common.ps1`), `.cmd`/`.ps1` stay CRLF
+  (`.gitattributes`). Test against a fake Steam layout with `-SteamDir`/`-GameDir`/`-OutDir`/`-NoPause`, never the real game folder.
 - Start Copilot CLI inside this repo so `.mcp.json` (reframework, ghidra) and `.github/lsp.json` load.
 - RE: map types with `tools/dev/re-typemap.ps1` (output stays in `.research-cache/`); record verified facts in `docs/re/game-model.md`.
 - Deploy with `tools/deploy.ps1`. Lua hot-reloads via REFramework "Reset Scripts"; the DLL needs a game restart.

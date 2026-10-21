@@ -48,6 +48,12 @@ session exists for others to join until the hunt is accepted, **in the same fram
 The mission continues after the hunt objective (hypothesis **H2** confirmed).
 `QuestData` also has `_EnableGuestNpc` and `_PartnerNpc` (story partner NPC).
 
+✅ **Assignments** (what the UI calls a story assignment, e.g. "Chapter 1-2 · Village of Whispering Winds") are
+`MissionManageID`s that group one or more missions: `MissionManager._MissionSetting._MissionActivityData
+._MissionManageDataList[]` (`ManagingMissionData`: `_ParentChapterId`/`_ChildChapterId`, title `_MissionTextID` (Guid →
+localised text), `_SettingMissionDataList[].getMissionID()`, `_IsSideMission`, `_ActivityId`). Chapter 1 map:
+[remote-testing.md](../testing/remote-testing.md#session-plan). Titles are for humans only; the mod keys on mission IDs.
+
 ## 3. Environment Link = Link Party "sync" — R6 (✅ API; 🔶 behaviour)
 
 | Area | Members (`app.Net_Party` unless noted) |
