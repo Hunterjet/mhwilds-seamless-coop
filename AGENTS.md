@@ -29,6 +29,7 @@ These rules add to `C:\src\AGENTS.md` (machine-wide rules: personal files, crede
 
 ## Workflow
 - GitHub: use `tools/dev/gh.ps1` (system gh with project-scoped config in `C:\src\.cache\gh`; token approved by the user for this repo).
+  Quote comma lists passed through it (`--json 'databaseId,status'`): PowerShell splits unquoted commas into separate arguments.
 - Two-player testing uses a **remote tester** (PC-B, no access). Anything they must do goes into plain-language tester
   docs and session scripts (`docs/testing/`, `tools/tester-kit/`). Never put personal details about the tester in the repo.
 - Tester kit: build with `powershell -File tools/tester-kit/build-kit.ps1` (→ `C:\src\.cache\dist\`), publish as a
