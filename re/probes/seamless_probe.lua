@@ -9,7 +9,7 @@
 -- REFramework menu (Insert key) > "Seamless Co-op probe": status, pause, marks. F8 adds a mark at any time.
 -- Part of https://github.com/Hunterjet/mhwilds-seamless-coop (MIT). Research tool, not the mod itself.
 
-local VERSION = "0.1.1"
+local VERSION = "0.1.2"
 
 local CFG = {
     snapshot_interval = 1.0, -- seconds between state checks (a line is written only when something changed)
@@ -85,6 +85,19 @@ local TARGETS = {
         "play", "load", "unload", "startStartFsm", "startEndFsm", "endStartFsm", "endEndFsm", "RequestFlowChange",
     } },
     { type = "app.cGameSceneTransition", patterns = { "^start", "^request", "^req%u", "^on%u", "^change%u" } },
+    -- Dialogue scenes (talk events with forwardable lines and choices), added in 0.1.2
+    { type = "app.DialogueManager", patterns = VERBS, methods = {
+        "requestDialogue", "startDialogue", "finishDialogue", "cancelDialogue", "cancelDialogueAll",
+        "requestSkipMainDialogue", "skipMainDialogue", "requestFinish", "requestStart", "requestAbortMainDialogue",
+        "requestPause", "requestResumePause", "endPause", "finishManualEnd", "finishManualEndChain",
+        "requestTransOrderDialogue", "requestDialogueDynamicNpcChange", "onSceneJump", "onFastTravel",
+    } },
+    { type = "app.cDialogueSkipManager", methods = { "requestSkip" } },
+    { type = "app.cDialogueTalkPlayer", patterns = {
+        "^start", "^end", "^finish", "^cancel", "^request", "^req%u", "^skip", "^select", "^decide", "^choice",
+        "^on%u", "^notify",
+    } },
+    { type = "app.cDialogueNodeControllerChoice", methods = { "callback_ChoiceEnd", "initialize", "loadEndEvent", "finalize" } },
 }
 
 ---------------------------------------------------------------------------------------------------------------------
@@ -371,6 +384,14 @@ local function snapshot()
         s.demoBusyLoad = g(dm, "get_IsBusyLoad")
         s.demoRequestPlaying = g(dm, "isExistRequestPlaying")
         s.demoWaitSkip = g(dm, "get_WaitSkipRequest")
+    end
+    local dlg = sdk.get_managed_singleton("app.DialogueManager")
+    if dlg then
+        s.dlgTalking = g(dlg, "get_IsTalking")
+        s.dlgTalkingOrWait = g(dlg, "get_IsTalkingOrWaitRequest")
+        s.dlgActive = g(dlg, "get_ActiveDialogueNum")
+        s.dlgType = g(dlg, "get_CurrentDialogueType")
+        s.dlgTimeline = g(dlg, "get_IsMainDialogueTimelineOngoing")
     end
     local nm = sdk.get_managed_singleton("app.NetworkManager")
     if nm then
