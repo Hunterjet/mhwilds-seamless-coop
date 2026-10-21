@@ -215,6 +215,7 @@ dialogue, help with small monsters, and nobody gets soft-locked, warped away or 
 | N5 | **Privacy:** logs exclude OS user names and truncate Steam IDs. No telemetry. |
 | N6 | **Maintainability:** every game type/method name lives in one validated registry, so a title update is fixed in one place. |
 | N7 | **Installability:** a single zip that extracts into the game folder or installs via Fluffy Mod Manager. No launcher and no game file edits. |
+| N8 | **Latency:** works between peers on different continents (Steam relay, up to ~300 ms RTT). Timeouts are sized for that, and shared cutscenes use a scheduled start so playback starts within about 250 ms. |
 
 ## 12. Release criteria (v1.0)
 

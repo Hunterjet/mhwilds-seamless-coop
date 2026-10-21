@@ -76,7 +76,7 @@
 | Platform | Steam PC, latest game version only; every party member runs the same mod version |
 | Tech | REFramework **Lua** for logic/UI + small **C++ REFramework plugin** for networking/native needs |
 | Distribution | **Open source (MIT)** on GitHub + Nexus Mods |
-| Testing | Two PCs + two Steam accounts; online-testing risk accepted |
+| Testing | Developer PC + a **remote tester's laptop in another country** (no remote access; scheduled, scripted sessions — see [remote-testing](../testing/remote-testing.md)). Developer accepts the online-testing risk; the tester is informed before the first session. |
 | Game folder | Agent may write only inside `<game>\reframework\` and replace REFramework's `dinput8.dll` |
 
 ## Known research gaps

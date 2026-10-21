@@ -72,3 +72,20 @@ cd tools\web-research; $env:HEADLESS='0'; node fetch-pages.mjs ..\..\.research-c
 ```
 
 Keep it low-volume. Nexus Mods and Reddit pages render without login; old.reddit.com requires an account.
+
+## 6. GitHub
+
+- Repository: https://github.com/Hunterjet/mhwilds-seamless-coop (public).
+- GitHub CLI is portable: `C:\src\_tools\gh`. Always call it through **`tools\dev\gh.ps1`**, which keeps its config
+  in `C:\src\.cache\gh` instead of the user profile. The login token lives in Windows Credential Manager (gh's keyring
+  entry). It was approved for this repository's work only. Sign out with `tools\dev\gh.ps1 auth logout`.
+- This repo's local git config resets inherited credential helpers and uses only the gh login, so pushes never touch
+  credentials stored elsewhere on the PC. Commits use the GitHub **noreply** email (repo-local `user.email`).
+
+## 7. Troubleshooting
+
+- **`/lsp` says clangd / lua-language-server "not found":** the terminal was opened before the toolchain install, so it
+  has an old `PATH`. Close **all** Windows Terminal windows, reopen, start `copilot` in the repo, then `/resume`.
+- **Black screen for minutes on first launch after a game or REFramework update:** expected; see §2.
+- **`reframework` MCP tools fail with "pipe not connected" or a connection error:** the game isn't running, or the
+  re-engine-mcp plugin isn't installed. It only answers while the game runs.

@@ -23,6 +23,9 @@ These rules add to `C:\src\AGENTS.md` (machine-wide rules: personal files, crede
 - Logs must not contain OS user names or full Steam IDs.
 
 ## Workflow
+- GitHub: use `tools/dev/gh.ps1` (portable gh, config in `C:\src\.cache\gh`, token approved by the user for this repo).
+- Two-player testing uses a **remote tester** (PC-B, no access). Anything they must do goes into plain-language tester
+  docs and session scripts (`docs/testing/`). Never put personal details about the tester in the repo.
 - Start Copilot CLI inside this repo so `.mcp.json` (reframework, ghidra) and `.github/lsp.json` load.
 - Deploy with `tools/deploy.ps1`. Lua hot-reloads via REFramework "Reset Scripts"; the DLL needs a game restart.
 - Commits: include the `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` trailer.

@@ -212,14 +212,14 @@ JSON objects (REFramework's `json` module) wrapped in a small envelope:
 | Type | Direction | Payload (main fields) | Purpose |
 |---|---|---|---|
 | `HELLO` / `HELLO_ACK` | both | mod version, protocol, game build, REFramework rev, hunter GUID, story point, settings that matter | Handshake & compatibility (spec F5.2). |
-| `HEARTBEAT` | both, ~1 Hz | state (idle/joining/in-quest/cutscene), mission ID, segment seq, checksum | Liveness, desync detection. |
+| `HEARTBEAT` | both, ~1 Hz | state (idle/joining/in-quest/cutscene), mission ID, segment seq, checksum, send time + echoed peer time | Liveness, desync detection, **RTT and clock-offset estimate** (peers may be on different continents). |
 | `MISSION_INTENT` | leader → all | mission ID, story point, quest/session info as available | "I am starting this story quest". |
 | `JOIN_READY` / `JOIN_REFUSED` | follower → leader | eligibility result & reason | Spec F1.2. |
 | `JOIN_INFO` | leader → follower | session identifiers needed by the game's join call | Drives the game's own join. |
 | `JOINED` / `LEFT` | follower → leader | — | Membership in the leader's quest. |
 | `SEGMENT_STATE` | leader → all | FSM step/flags, objectives, NPC anchors, zone | Spec F2 (keyframes + deltas). |
 | `TRIGGER_REQUEST` | follower → leader | trigger ID | Spec F2.6 (P2). |
-| `CUTSCENE_PREPARE` / `READY` / `START` / `SKIP_VOTE` / `SKIP` / `END` | mixed | event ID + identity, votes, post-state | Spec F3. |
+| `CUTSCENE_PREPARE` / `READY` / `START` / `SKIP_VOTE` / `SKIP` / `END` | mixed | event ID + identity, scheduled start time (leader clock), votes, post-state | Spec F3. `START` schedules playback ahead by half the worst RTT plus a margin, so peers start together. |
 | `CATCH_UP` | leader → follower | leader position/area | Spec F2.2. |
 | `NOTICE` | any | code + params (localized client-side) | Panel messages. |
 
@@ -255,7 +255,7 @@ sequenceDiagram
   L->>F: CUTSCENE_PREPARE {event, identity, segment seq}
   F->>F: prepare same event (story path, else gallery path)
   F->>L: CUTSCENE_READY
-  L->>F: CUTSCENE_START
+  L->>F: CUTSCENE_START {startAt = leader clock + RTT/2 + margin}
   par all play together
     L->>L: release start
   and
@@ -325,8 +325,9 @@ events (lockstep), and the mod automates the vanilla regroup at the gate. That i
   start Copilot CLI **inside the repo** so the project `.mcp.json` loads → use the `reframework` tools (read-only first).
   re-engine-mcp is **dev-only**: it can call any game method (including sending chat), so remove its plugin source from
   `reframework\plugins\source\` before normal online play.
-- **Two-PC testing:** PC-A (dev, usually leader) and PC-B (follower) each run `git pull` + `tools/deploy.ps1`, or the
-  same release zip. For each test, collect both PCs' `reframework/data/seamless_coop/logs/`. Use a private Link Party.
+- **Two-player testing:** PC-B is a **remote tester's laptop in another country**, and we have no remote access to it.
+  Builds reach it as GitHub pre-releases plus a tester kit (install, uninstall, collect logs). Sessions are short,
+  scheduled and scripted. Single-PC work comes first. See [remote-testing.md](testing/remote-testing.md).
 - **Code quality:** LuaLS diagnostics (`.luarc.json`), clangd/clang-tidy for C++, StyLua formatting, and a review pass per change.
 
 ## 12. Testing strategy
@@ -335,7 +336,7 @@ events (lockstep), and the mod automates the vanilla regroup at the gate. That i
 |---|---|---|
 | Unit (offline) | Protocol encode/validate, eligibility rules, state machines, registry resolution logic | Lua 5.4 runner (official Lua source built by CMake) + a tiny assertion lib; Catch2 for plugin framing/rate limits. |
 | In-game, single PC | Adapters, hooks, panel, build gate, cutscene recipes | **Loopback transport** ("fake peer" that replays recorded messages) + probe scripts + debug panel. |
-| Two-PC integration | F1–F4 end-to-end | Scripted checklists per story quest in `docs/testing/story-matrix.md` (quest × feature × result × notes). |
+| Remote two-player sessions | Side channel, F1–F4 end-to-end | Scheduled sessions S0–S3+ with the remote tester ([remote-testing.md](testing/remote-testing.md)); checklists per story quest in `docs/testing/story-matrix.md` (quest × feature × result × notes); logs from both PCs. |
 | Regression | After every title update or REFramework update | Build gate + smoke checklist (join, segment, cutscene, hunt, return) on 3 representative quests. |
 | Fault injection | Disconnects, menus open, late join, version mismatch, missing exports | Debug toggles in the panel. |
 
@@ -343,8 +344,8 @@ events (lockstep), and the mod automates the vanilla regroup at the gate. That i
 
 | Phase | Goal | Exit criteria |
 |---|---|---|
-| **0 · Foundations** *(mostly done)* | Toolchain, REFramework nightly + C# API, re-engine-mcp, Ghidra/GhidraMCP, LSP, research & planning docs | Game boots with the new REFramework; re-engine-mcp answers `get_game_info`; `il2cpp_dump.json` saved; LuaLS stubs generated; repo pushed to GitHub (user creates the remote). |
-| **1 · RE spike** | Answer R1–R8 (read-only) | `docs/re/game-model.md` + H1/H2 decision + registry draft. |
+| **0 · Foundations** *(done)* | Toolchain, REFramework nightly + C# API, re-engine-mcp, Ghidra/GhidraMCP, LSP, research & planning docs, GitHub repo | ✅ Game boots with the new REFramework; re-engine-mcp answers live queries; repo public at `Hunterjet/mhwilds-seamless-coop`. Carried into Phase 1: SDK dump + LuaLS stubs. |
+| **1 · RE spike** | Answer R1–R8. Single-PC first, then sessions S0/S1 with the remote tester (tester kit v0) | `docs/re/game-model.md` + H1/H2 decision + registry draft. |
 | **2 · Skeleton & side channel** | Lua skeleton (core/compat/net/ui), `seamless_net.dll`, handshake, heartbeat, panel party view, loopback transport, kill switch | Two PCs show each other as "modded · compatible"; messages round-trip; a forced build mismatch disables cleanly. |
 | **3 · F1 MVP** | Seamless join for **one** Chapter 1 story quest end-to-end; eligibility; late join; save backups | Spec F1 acceptance on that quest; both saves progress correctly. |
 | **4 · F2 segments** | Presence, travel catch-up, dialogue, objectives, NPC sync | Spec F2 acceptance on representative quests of Ch. 1–2. |
@@ -379,6 +380,7 @@ events (lockstep), and the mod automates the vanilla regroup at the gate. That i
 | REFramework changes (API, Lua version) | Build/runtime breaks | Pin a tested nightly; CI builds against the pinned commit; compatibility table. |
 | Antivirus false positives on the DLL | Install friction | Open source, no packers, CI-built, consistent signing metadata. |
 | Single maintainer burnout (ER lesson) | Project stalls | Documented architecture, small modules, contributor guide, automation. |
+| Remote tester only (other country, no remote access, time zones) | Slow two-player feedback | Single-PC work first; loopback transport; short scripted sessions; tester kit automates install, uninstall and log collection; logs from both PCs. |
 | Performance | FPS loss | Event-driven hooks, no heavy per-frame work, profiling in Phase 7. |
 
 ## 16. Tooling inventory (installed 2026-10-21)
