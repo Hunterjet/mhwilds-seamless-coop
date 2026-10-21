@@ -1,11 +1,16 @@
-# Game model — RE spike notes (v0, static map)
+# Game model — RE spike notes (v0.2)
 
 > **Build:** MH Wilds Steam build 24705561 · REFramework nightly-01433 (`d4611ae`) · captured 2026-10-21.
 > **Method:** read-only queries against the live type database via re-engine-mcp (`tools/dev/re-typemap.ps1`, MCP
-> `get_type`/`chain`/getters) + the REFramework enum dump. Full schemas are saved locally in `.research-cache/typemap/`
+> `get_type`/`chain`/getters) + the REFramework enum dump + probe traces (`re/probes/`, analysed in
+> [run1-analysis.md](run1-analysis.md)). Full schemas are saved locally in `.research-cache/typemap/`
 > (gitignored, game-derived).
 > **Legend:** ✅ verified on the live game · 🔶 hypothesis (to confirm with probe traces / two-player sessions).
 > Answers the implementation plan's research questions R1–R8 incrementally.
+>
+> **v0.2 (run 1):** H2 confirmed. Hunts are objective ranges inside main missions. The quest session is created when
+> the hunt is accepted, right as the monster-reveal cutscene ends. Environment Link is enabled per mission/stage and
+> introduced by mission `001075`. Dialogue scenes and cinematics are separate systems. Details in [run1-analysis.md](run1-analysis.md).
 
 ## 1. Story progress — R4 (✅ answered)
 
@@ -31,12 +36,16 @@ compare `getProgressId()` (and the next main mission) between members.
 **`_QuestStartObjectiveID` / `_QuestEndObjectiveID`**, `_ClearMissionIDList`, `_OpenFlagMissionList`, `_StoryFlagIDList`,
 `_QuestEnvironmentData`, `get_ClearMissionObjectiveList()`.
 
-🔶 **A story mission is a chain of objectives. Its hunt ("quest") portion starts at `_QuestStartObjectiveID`.**
-At that point the game creates a quest session without a loading screen ("seamless"):
-`MissionManager.reqSeamlessQuestSessionExecuteEvent(MissionIDList.ID)`, `_SeamlessQuestSessionExecuteEvent`,
-`get_IsGoQuestSeamless()`, `get_IsWaitingSeamlessQuestSession()`; `cQuestDirector.IsGoSeamless()`,
-`IsWaitingSeamlessQuestSession()`. 🔶 **This is the vanilla multiplayer gate**: no quest session exists for others to
-join until the mission reaches its quest-start objective (hypothesis **H2**, implementation plan §9).
+🔶 → ✅ **A story mission is a chain of objectives. Its hunt ("quest") portion is the objective range
+`[_QuestStartObjectiveID.._QuestEndObjectiveID]`** (32 of 72 loaded main missions have one, e.g. `001030 [5..5]`,
+`001050 [3..3]`, `001080 [6..6]`, confirmed by `clearQuestObjective(5|3|6)` in run 1).
+At the hunt's start the game accepts the quest and creates a quest session without a loading screen ("seamless"):
+`cQuestDirector.acceptQuest` → `goQuest`, `qMaxJoin` 1 → 4, `NetworkRequestManager.createSession(QUEST, …)`,
+`inviteLinkPartyQuest`. Related members: `MissionManager.reqSeamlessQuestSessionExecuteEvent(MissionIDList.ID)`,
+`_SeamlessQuestSessionExecuteEvent`, `get_IsGoQuestSeamless()`, `get_IsWaitingSeamlessQuestSession()`;
+`cQuestDirector.IsGoSeamless()`, `IsWaitingSeamlessQuestSession()`. ✅ **This is the vanilla multiplayer gate**: no quest
+session exists for others to join until the hunt is accepted, **in the same frame the monster-reveal cutscene ends**.
+The mission continues after the hunt objective (hypothesis **H2** confirmed).
 `QuestData` also has `_EnableGuestNpc` and `_PartnerNpc` (story partner NPC).
 
 ## 3. Environment Link = Link Party "sync" — R6 (✅ API; 🔶 behaviour)
@@ -55,6 +64,12 @@ join until the mission reaches its quest-start objective (hypothesis **H2**, imp
 progress allows it. **Starting a story event makes players leave sync** (`LEAVE_StoryEvent`), and story segments can
 hide other players by progress. Once the mission reaches its quest portion, a seamless quest session starts, and Link
 Party members get a quest invite they can accept. That is exactly the vanilla flow players describe.
+
+✅ **Run 1 additions:** party-sync progress (`PartySyncProgressDatas`: `(id, missionStarted, missionCleared, HR)`) is 0
+until mission `001070` is cleared (→ 6). Then 8 = `001080` hunt accepted, 10 = `001080` cleared … 140, then HR
+9/16/21/31/41 steps. Mission **`001075` introduces Environment Link**: on activation it calls
+`setPartySyncInfo(001075, stage, true)` for stages 0–4 and 9–11. At each hunt's end the game calls
+`Net_Party.onLeaveLinkPartySync()` and `MissionManager.resetNetStoryPackageFlag()`.
 
 ## 4. Sessions and joining (✅ API)
 
@@ -88,11 +103,28 @@ event) and **`receiveNetPacket_End` / `receiveNetPacket_Skip(SESSION_TYPE, Int32
 🔶 Shared story cutscenes (spec F3) can likely reuse this path instead of a custom barrier for the skip/end part.
 Also `app.CutSceneGalleryManager` (replay pipeline, `STATE` enum) as a fallback for followers.
 
+✅ **Run 1:** 19 timeline events: `evc####` story cutscenes, `egm####` in-engine scripted events, `evc2xxx` short system
+scenes. Lifecycle `requestLoad` → `requestPlay` → `startStartFsm` → `onPlayStart` / `onPlayStartTimeline(id)` → … →
+`onPlayEndTimeline(id)` → `endEndFsm` → `unload`. The skip path is `requestSkip` → `execSkip` (→ `notifyCutSkipEnd`).
+
+**Dialogue scenes are a different system**: `app.DialogueManager` (`requestDialogue`, `startDialogue`, `finishDialogue`,
+`requestSkipMainDialogue`/`skipMainDialogue`, state `get_IsTalking`, `get_CurrentDialogueType`,
+`get_IsMainDialogueTimelineOngoing`), `app.cDialogueTalkPlayer`, `app.cDialogueSkipManager.requestSkip`, and choices via
+`app.cDialogueNodeControllerChoice.callback_ChoiceEnd(Int32)`. The story FSM records them with
+`cStoryFsmController.setDialogueSelectedIndex(DialogueID, MissionID, DynamicFlag, Int32, …)`.
+`app.DialogueType.TYPE { NONE, DEFAULT, FORCE_READ, KEY, GOSSIP, NAGARA }`: KEY = story dialogue scenes,
+DEFAULT = ordinary NPC talk, NAGARA = walk-and-talk lines, GOSSIP = ambient chatter.
+
 ## 7. Story FSM (✅ API, partial)
 
 `app.cStoryFsmController` (156 fields, 256 methods): `_EnableSetDrawOffOtherPlayer`, `_IsProhibitionStartQuest` /
 `ProhibitedStartQuest`, `getHasMainMissionStartTriggerNpcId(MissionIDList.ID)` → NPC that starts a main mission,
 `addPlContinueAction(PLAYER_CONTINUE_TYPE[])`, `reqSendNextStoryRoutePoint(cMsgCutSceneStandbyPos)`.
+✅ Reach the active one with `MissionManager.getEnableMissionController(MissionIDList.ID)` → `MissionController.StoryFsmCtrl`.
+Active player restrictions: `_PlControls : ace.BIT_FLAG64` (`._Value` UInt64, bits = `PLAYER_CONTINUE_TYPE`).
+Seikret control: `_PorterControls`, `_PoterAutoChangeParams`; NPC/route control: `_RouteControlList`,
+`addStoryRouteController`. Stay-close leash: `cMissionHaltController.haltDialogueAttention / haltDialogueWarning /
+haltEvent / haltCancel`. Walk-and-talk analysis: [run1-analysis.md §6](run1-analysis.md).
 
 ## 8. Updated hypotheses and approach
 
