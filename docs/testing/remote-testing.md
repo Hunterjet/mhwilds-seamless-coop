@@ -48,6 +48,11 @@
 - **Homework before the first joint session:** both players create a test character and play solo until multiplayer
   unlocks (after Chapter 1's "Slimy Situation" Chatacabra hunt, about an hour), then stop at the same point. The
   developer uses a separate **probe** character for solo RE work, so the paired character stays in step with the tester's.
+- **Story-writing tests (from S1, *Follow the leader's story*):** the mod may record story steps on the tester's
+  **test character only**, forward only (hard requirement P1, [f1-story-together.md](../design/f1-story-together.md) §5).
+  The session script says so beforehand. Each session starts with a fresh launch, so a save backup from that launch
+  exists. Every story-writing session ends with a P1 check: both players' progress (panel/logs) is the same or higher
+  than before, never lower.
 
 ## Tester kit (`tools/tester-kit/`; current: v0.2, released as a GitHub pre-release)
 
@@ -77,7 +82,7 @@ Delivery: **GitHub pre-releases** on this repository (downloading needs no GitHu
 |---|---|---|---|
 | **S0 · Setup & link check** | Now (kit v0.2) | REFramework, probe and mod test build run on PC-B. Private Link Party across countries works. **Mod connection between the PCs (Phase 2 exit check, Part 2b).** Is Environment Link available at the pair point (progress 250, see below)? If yes: what happens to it when one player starts a story assignment (R6). Script: [`SESSION-00.md`](../../tools/tester-kit/SESSION-00.md) | Kit v0.2: REFramework + read-only probe + mod test build |
 | **S0b · Linked story baseline** | After S0 (+ solo catch-up homework if Environment Link was refused) | At "Forest Findings" (Ch. 1-3, `001080`), with Environment Link on: one player starts the assignment (R6), then the *Lala Barina* hunt is joined the vanilla way. Traces from both PCs give the vanilla join path that F1 will automate. | Kit v0.2 |
-| **S1 · Early-join experiment** | Phase 1 (R8) | Can a linked player enter the leader's story mission before the gate? Record client and server responses. | Kit v0.3 |
+| **S1 · Re-link and first story step** | Phase 1→3 (R8, R9) | E3: after the game ends the Environment Link at a story event, can the mod re-create it right away? E4: auto-accept the leader's quest invite at the gate. E5: record one leader story step (an objective) on the tester's same-point test character. Record client and server responses. | Kit v0.3 |
 | **S2 · Side channel** | Phase 2 | Handshake, heartbeat/RTT, version-mismatch handling, reconnect. The basics are covered by S0 Part 2b; this session adds reconnects, restarts and a forced mismatch | Kit v0.2+ |
 | **S3+ · Features** | Phases 3–7 | F1–F4 acceptance on specific story quests (checklists in `story-matrix.md`) | Mod builds |
 

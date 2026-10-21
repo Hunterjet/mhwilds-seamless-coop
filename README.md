@@ -15,6 +15,10 @@ through SOS.
 ## Planned scope (v1.0)
 
 - **Seamless story join**: Link Party members at the same story point join the leader's story quest from its start.
+- **Follow the leader's story** (on by default, as in MHW Seamless Co-op): a follower at the leader's story point, or
+  up to 3 assignments behind, gets the leader's story steps recorded through the game's own routines, so everyone's
+  story matches. Story progress only ever moves **forward**: no save is ever set back, and a save that is ahead of the
+  leader's is never touched.
 - **Together through story segments**: shared travel, dialogue, objectives and NPCs before the hunt.
 - **Shared story cutscenes** with vote-to-skip.
 - **Auto-follow** the leader into quests and back.
@@ -54,9 +58,11 @@ The first configure downloads the pinned REFramework plugin header and its Lua 5
 ## Risk statement
 
 Any mod that changes online behaviour carries **account risk**. Capcom suspends accounts over modified quest data and
-"takes action based on play data and history". This mod is designed to never alter quest data, rewards or saves. It
-uses only the game's own functions and works only between consenting modded party members. Even so, the risk cannot be
-ruled out.
+"takes action based on play data and history". This mod is designed to never alter quest data or rewards and never
+writes save files. It uses only the game's own functions and works only between consenting modded party members.
+*Follow the leader's story* records story progress on followers' saves through the game's own routines, for content
+they play together with the leader (or, when catching up, up to 3 assignments they skipped). That is the part most
+likely to draw attention, and it can be turned off. The risk cannot be ruled out.
 
 ## Licence
 

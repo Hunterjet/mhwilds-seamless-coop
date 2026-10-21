@@ -13,6 +13,11 @@ These rules add to `C:\src\AGENTS.md` (machine-wide rules: personal files, crede
   Never touch other game files, PAKs or the exe. **Never touch save files** (the plugin may only *copy* them for backups).
 - **Fair play:** never modify quest definitions, rewards, timers, drops, monster parameters or story flags outside the
   game's own routines. Joins must use the game's own request functions.
+- **P1, progress is never lowered (owner's hard requirement):** under no circumstance may the mod undo or lower any
+  save's story progress, and it must never write to a save that is ahead of the leader's. Story steps (*Follow the
+  leader's story*) go through one forward-only writer that checks the player's own progress before and after every step,
+  fails closed, and never rolls anything back. Never call the game's reset routines (e.g. `resetNetStoryPackageFlag`).
+  Design: `docs/design/f1-story-together.md` §5.
 - Every game type/method/field name goes through `src/lua/seamless_coop/compat/registry.lua`. Features must fail
   closed when an entry does not resolve.
 - Hooks do minimal work (capture → emit event). Logic runs from the scheduler under `pcall`.

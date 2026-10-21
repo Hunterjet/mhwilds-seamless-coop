@@ -134,4 +134,6 @@ monster. Works for shared progression but is explicitly "not seamless at all".
 - Keep invasions/PvP-style features out of scope (divisive in ER; irrelevant to MH).
 - Main-agent note: "shared story progression" is satisfied by the chosen **same-point policy** (everyone at the same
   story point progresses together); advancing players who are behind is explicitly out of scope for v1.
+  *Revised 2026-10-21: the project now follows MHW's "Follow the leader's story" (up to 3 assignments behind, forward
+  only); see [f1-story-together.md](../design/f1-story-together.md).*
 

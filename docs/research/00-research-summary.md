@@ -71,7 +71,7 @@
 | Topic | Decision |
 |---|---|
 | v1 features | Join story quests from the start · play pre-hunt segments together · shared cutscenes · auto-follow · safety net · in-game panel |
-| Progress policy | **Same story point** only; players who are ahead may join as helpers; players behind are blocked |
+| Progress policy | ~~**Same story point** only; players who are ahead may join as helpers; players behind are blocked~~ → **revised the same day:** *Follow the leader's story* (MHW-style, on by default): followers at the leader's point or up to 3 assignments behind record the leader's story steps, forward only; *off* is a stretch goal. **Hard requirement P1:** no save's progress is ever lowered; saves ahead of the leader are never written. See [f1-story-together.md](../design/f1-story-together.md) |
 | Content | Base-game story (Low + High Rank, Ch. 1–6, and title-update story assignments); design for Ascendance later |
 | Platform | Steam PC, latest game version only; every party member runs the same mod version |
 | Tech | REFramework **Lua** for logic/UI + small **C++ REFramework plugin** for networking/native needs |
