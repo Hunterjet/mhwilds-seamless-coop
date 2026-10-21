@@ -9,7 +9,7 @@
 -- REFramework menu (Insert key) > "Seamless Co-op probe": status, pause, marks. F8 adds a mark at any time.
 -- Part of https://github.com/Hunterjet/mhwilds-seamless-coop (MIT). Research tool, not the mod itself.
 
-local VERSION = "0.1.2"
+local VERSION = "0.1.3"
 
 local CFG = {
     snapshot_interval = 1.0, -- seconds between state checks (a line is written only when something changed)
@@ -197,7 +197,12 @@ local function arg_kind(ptype)
 end
 
 local function as_int(ptr, kind)
-    local v = sdk.to_int64(ptr)
+    local v
+    if type(ptr) == "number" then
+        v = math.tointeger(ptr) or 0
+    else
+        v = sdk.to_int64(ptr)
+    end
     if kind == "b" then return (v & 1) == 1 end
     if kind == "u8" then return v & 0xFF end
     if kind == "i8" then v = v & 0xFF; return v >= 0x80 and v - 0x100 or v end
@@ -258,7 +263,7 @@ local function on_call(h, args)
     local a = {}
     for i = 1, h.nparams do
         local ok, v = pcall(render_arg, args[h.base + i - 1], h.kinds[i])
-        a[i] = ok and v or "<err>"
+        a[i] = ok and v or ("<err:" .. tostring(v):sub(1, 80) .. ">")
     end
     emit({ t = rel(), k = "call", m = h.label, a = a })
 end
@@ -377,6 +382,20 @@ local function snapshot()
     if expect_main then
         local ok, v = pcall(expect_main.call, expect_main, nil)
         s.nextMainMission = ok and v or "<err>"
+        -- Active walk-and-talk restrictions: StoryFsmDef.PLAYER_CONTINUE_TYPE bits of the active main mission
+        if ok and type(v) == "number" and v >= 0 and mm then
+            local okc, mc = pcall(mm.call, mm, "getEnableMissionController", v)
+            if okc and mc then
+                local oks, story_obj = pcall(mc.get_field, mc, "StoryFsmCtrl")
+                if oks and story_obj then
+                    local okp, plc = pcall(story_obj.get_field, story_obj, "_PlControls")
+                    if okp and plc then
+                        local okv, bits = pcall(plc.get_field, plc, "_Value")
+                        s.plControls = okv and bits or "<err>"
+                    end
+                end
+            end
+        end
     end
     local dm = sdk.get_managed_singleton("app.DemoMediator")
     if dm then
