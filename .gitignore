@@ -1,0 +1,30 @@
+# Dependencies / tool state
+node_modules/
+tools/web-research/.pw-profile/
+
+# Raw third-party page dumps, enum extracts, game dumps (not redistributable; regenerate locally)
+.research-cache/
+il2cpp_dump.json
+Enums_Internal.hpp
+
+# Build output
+build/
+out/
+*.dll
+*.pdb
+*.lib
+*.exp
+*.ilk
+*.obj
+
+# Editors / OS
+.vs/
+.vscode/*
+!.vscode/extensions.json
+*.user
+Thumbs.db
+.DS_Store
+
+# Generated LuaLS stubs from the local SDK dump
+types/
+

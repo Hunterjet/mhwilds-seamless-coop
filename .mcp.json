@@ -1,0 +1,21 @@
+{
+  "mcpServers": {
+    "reframework": {
+      "type": "local",
+      "command": "dotnet",
+      "args": ["C:\\src\\re-engine-mcp\\mcp-server\\bin\\Release\\net10.0\\McpServer.dll"],
+      "env": {
+        "REFRAMEWORK_API_URL": "http://localhost:8899",
+        "DOTNET_CLI_TELEMETRY_OPTOUT": "1",
+        "DOTNET_NOLOGO": "1"
+      },
+      "tools": ["*"]
+    },
+    "ghidra": {
+      "type": "local",
+      "command": "C:\\src\\_tools\\ghidra-mcp-venv\\Scripts\\ghidra-mcp.exe",
+      "args": ["--ghidra-server", "http://127.0.0.1:8080/"],
+      "tools": ["*"]
+    }
+  }
+}

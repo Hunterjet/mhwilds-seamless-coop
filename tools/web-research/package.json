@@ -1,0 +1,9 @@
+{
+  "name": "web-research",
+  "private": true,
+  "type": "module",
+  "description": "Low-volume research helpers (Playwright + system Edge, fresh isolated profile).",
+  "dependencies": {
+    "playwright": "^1.64.1"
+  }
+}

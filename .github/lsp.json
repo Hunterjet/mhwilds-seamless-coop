@@ -1,0 +1,22 @@
+{
+  "lspServers": {
+    "clangd": {
+      "command": "clangd",
+      "args": ["--background-index", "--header-insertion=never"],
+      "fileExtensions": {
+        ".c": "c",
+        ".h": "cpp",
+        ".hpp": "cpp",
+        ".cpp": "cpp",
+        ".cc": "cpp",
+        ".cxx": "cpp"
+      }
+    },
+    "lua-language-server": {
+      "command": "lua-language-server",
+      "fileExtensions": {
+        ".lua": "lua"
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "$schema": "https://raw.githubusercontent.com/LuaLS/vscode-lua/master/setting/schema.json",
+  "runtime.version": "Lua 5.4",
+  "diagnostics.globals": [
+    "sdk", "re", "imgui", "draw", "d2d", "json", "fs", "log", "reframework", "thread",
+    "ValueType", "REManagedObject", "RETransform", "REComponent", "Vector2f", "Vector3f", "Vector4f",
+    "Matrix4x4f", "Quaternion", "seamless_net"
+  ],
+  "workspace.checkThirdParty": false,
+  "workspace.library": ["types"]
+}
