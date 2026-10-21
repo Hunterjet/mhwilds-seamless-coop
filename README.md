@@ -43,6 +43,8 @@ The first configure downloads the pinned REFramework plugin header and its Lua 5
 |---|---|
 | [docs/feature-spec.md](docs/feature-spec.md) | What the mod does: features, rules, acceptance criteria, settings, edge cases |
 | [docs/implementation-plan.md](docs/implementation-plan.md) | How it will be built: architecture, diagrams, protocol, RE spike, roadmap, risks |
+| [docs/design/f1-story-together.md](docs/design/f1-story-together.md) | Draft design for story co-op (F1) after the RE findings, with open decisions |
+| [docs/re/](docs/re/game-model.md) | Reverse-engineering notes: the game model and the trace analyses |
 | [docs/dev-environment.md](docs/dev-environment.md) | Toolchain, game-side dev setup (and how to revert it), agent tooling |
 | [docs/testing/remote-testing.md](docs/testing/remote-testing.md) | How two-player testing works with a remote tester |
 | [docs/research/](docs/research/00-research-summary.md) | Research notes (reference mods, Wilds multiplayer, community sentiment, modding ecosystem, RE tooling, game internals) |

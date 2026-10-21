@@ -295,7 +295,8 @@ sequenceDiagram
 > same frame the monster-reveal cutscene ends. Everything else in a mission is local single-player content. Environment
 > Link (party sync) is switched on per mission and stage (`MissionManager.setPartySyncInfo`) and introduced by mission
 > `001075`. **F1 is therefore "keep the party in sync through the mission + lockstep + auto-accept at the gate"; H1 is
-> dropped.** The original analysis is kept below for context.
+> dropped.** The layered design, the experiments it needs, and three decisions for the project owner are in
+> [design/f1-story-together.md](design/f1-story-together.md). The original analysis is kept below for context.
 
 Before run 1, the mechanism of the story gate was unconfirmed. Two working hypotheses decided the design:
 
