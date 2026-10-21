@@ -396,7 +396,9 @@ events (lockstep), and the mod automates the vanilla regroup at the gate. That i
   Fluffy Mod Manager.
 - **Versioning:** SemVer for the mod; a **protocol version** for the side channel; a compatibility table
   (game build ↔ REFramework revision ↔ mod version) in the README and in `compat/` for the build gate.
-- **CI (GitHub Actions, windows-latest):** build the plugin, run Lua and C++ tests, package the zip, attach it to the release. No obfuscation; reproducible builds.
+- **CI (GitHub Actions, windows-latest):** build the plugin, run Lua and C++ tests, package the zip, attach it to the
+  release. Build + tests are active since 2026-10-21 (`.github/workflows/ci.yml`); packaging and release upload come
+  with Phase 8. No obfuscation; reproducible builds.
 - **Title-update playbook:** (1) the mod self-disables on the new build; (2) update REFramework; (3) re-dump the SDK;
   (4) run the registry validator, fix renamed entries in `compat/registry.lua`; (5) smoke tests; (6) release and bump the
   compatibility table.

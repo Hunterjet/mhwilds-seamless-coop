@@ -38,6 +38,8 @@ These rules add to `C:\src\AGENTS.md` (machine-wide rules: personal files, crede
   `reframework\data\seamless_coop\config.json` → one `selftest:` line in `logs\session-N.log` (turn it off afterwards).
 - Build/test (vcvars64 shell): `cmake --preset release`, `cmake --build --preset release`, `ctest --preset release`.
   Lua-only: `build\release\tests\lua_runner.exe tests\lua\run.lua .` Lint: LuaLS `--check src\lua --configpath .luarc.json`.
+  CI (`.github/workflows/ci.yml`) runs the same build + ctest on every push/PR; keep it green
+  (`tools\dev\gh.ps1 run list --workflow ci.yml`).
 - seamless_net.dll must be compiled against REFramework's own Lua sources at the pinned commit (RefDeps.cmake); when
   REFramework is updated, bump `REF_COMMIT` and rebuild. Lua bindings must never raise Lua errors (return nil, err).
 - Docs with Mermaid: run `node tools/web-research/check-mermaid.mjs <file.md>` before committing. Never use `;` in

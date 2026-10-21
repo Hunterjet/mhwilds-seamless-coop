@@ -1,5 +1,7 @@
 # Seamless Co-op — Monster Hunter Wilds
 
+[![CI](https://github.com/Hunterjet/mhwilds-seamless-coop/actions/workflows/ci.yml/badge.svg)](https://github.com/Hunterjet/mhwilds-seamless-coop/actions/workflows/ci.yml)
+
 Play Monster Hunter Wilds' **main story together from the first step of every story quest** — ride, talk, investigate,
 fight small monsters and watch story cutscenes as one party — instead of soloing to each quest's cutscene and regrouping
 through SOS.

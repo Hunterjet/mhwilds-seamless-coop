@@ -127,7 +127,7 @@ peers (buttons for compatible, mismatched and silent peers on a simulated 150 ms
 PC-A (2026-10-21): every loopback case as expected, plus `steam_self=compatible rtt≈420ms` (a real Steam round trip
 to itself). Turn it off again for normal play.
 
-**CI (prepared, not active yet):** `tools/ci/github-ci.yml` builds the plugin and runs both test suites on
-`windows-latest`. GitHub rejects workflow files pushed with a token that lacks the `workflow` scope. To enable it:
-`tools\dev\gh.ps1 auth refresh -h github.com -s workflow` (interactive device login), then
-`git mv tools/ci/github-ci.yml .github/workflows/ci.yml`, commit and push.
+**CI:** `.github/workflows/ci.yml` builds the plugin and runs both test suites (`ctest`) on `windows-latest` for every
+push to `main`, every pull request, and on demand (Actions → CI → Run workflow). `seamless_net.dll` + `.pdb` are kept as
+a build artifact. Check runs with `tools\dev\gh.ps1 run list --workflow ci.yml`. Pushing changes under `.github/workflows/`
+needs the gh token's `workflow` scope (granted 2026-10-21).
