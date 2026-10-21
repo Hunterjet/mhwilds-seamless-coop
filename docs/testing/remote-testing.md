@@ -49,16 +49,20 @@
   unlocks (after Chapter 1's "Slimy Situation" Chatacabra hunt, about an hour), then stop at the same point. The
   developer uses a separate **probe** character for solo RE work, so the paired character stays in step with the tester's.
 
-## Tester kit (`tools/tester-kit/`; v0 released as a GitHub pre-release)
+## Tester kit (`tools/tester-kit/`; current: v0.2, released as a GitHub pre-release)
+
+v0.2 = REFramework + read-only probe 0.1.3 + the Seamless Co-op test build (Phase 2: panel, save backup at launch,
+side channel; no gameplay changes). The installer enables `dev_selftest` on first install, so every launch logs one
+`selftest:` line, including a Steam self-loop that checks the tester's relay path.
 
 | File | Purpose |
 |---|---|
 | `README-TESTER.md` | Plain-language steps: install, start, what a successful start looks like, F8 marks, sending logs, uninstall, troubleshooting |
-| `install.cmd` / `install.ps1` | Finds the game through Steam's library config and checks the game build. Backs up `dinput8.dll` and **copies** the save folder into `reframework\data\seamless_coop\save_backups\`. Installs the pinned REFramework (download + SHA-256 check of zip and DLL) and our files into `reframework\`. Writes an install manifest. Never modifies saves. |
-| `uninstall.cmd` / `uninstall.ps1` | Removes our files; restores the `dinput8.dll` from before the *first* install (or removes it if there was none) |
-| `collect-logs.cmd` / `collect-logs.ps1` | Zips traces, install manifests and the REFramework log onto the desktop; redacts the OS user name, computer name and full Steam IDs (keeps the last 4 digits) |
+| `install.cmd` / `install.ps1` | Finds the game through Steam's library config and checks the game build. Backs up `dinput8.dll` and **copies** the save folder into `reframework\data\seamless_coop\kit_save_backups\` (outside the plugin's rotation). Installs the pinned REFramework (download + SHA-256 check of zip and DLL), the probe and the mod test build (`mod\reframework\...`) into `reframework\`. Writes an install manifest. Never modifies saves. |
+| `uninstall.cmd` / `uninstall.ps1` | Removes the probe and the mod; restores the `dinput8.dll` from before the *first* install (or removes it if there was none) |
+| `collect-logs.cmd` / `collect-logs.ps1` | Zips probe traces, the mod's session logs, `diagnostics.json`, `config.json`, install manifests and the REFramework log onto the desktop; redacts the OS user name, computer name and full Steam IDs (keeps the last 4 digits) |
 | `SESSION-NN.md` | The script for the next session |
-| `kit-common.ps1`, `build-kit.ps1` | Shared helpers; kit builder (adds the probe and `VERSION.txt`, writes `C:\src\.cache\dist\seamless-coop-tester-kit-<v>.zip`) |
+| `kit-common.ps1`, `build-kit.ps1` | Shared helpers; kit builder (adds the probe, the mod via `tools/package.ps1 -StageOnly`, and `VERSION.txt`; writes `C:\src\.cache\dist\seamless-coop-tester-kit-<v>.zip`) |
 
 The `.cmd` launchers exist because double-clicking a `.ps1` opens Notepad. They run Windows PowerShell 5.1 with
 `-ExecutionPolicy Bypass`, pause on crashes, and tell the tester to extract the zip first. Every script also takes
@@ -71,10 +75,10 @@ Delivery: **GitHub pre-releases** on this repository (downloading needs no GitHu
 
 | Session | When | Goal | Tester installs |
 |---|---|---|---|
-| **S0 · Setup & link check** | Now (kit v0) | REFramework and probe run on PC-B. Private Link Party across countries works. Is Environment Link available at the pair point (progress 250, see below)? If yes: what happens to it when one player starts a story assignment (R6). Script: [`SESSION-00.md`](../../tools/tester-kit/SESSION-00.md) | Kit v0: REFramework + read-only probe 0.1.3 |
-| **S0b · Linked story baseline** | After S0 (+ solo catch-up homework if Environment Link was refused) | At "Forest Findings" (Ch. 1-3, `001080`), with Environment Link on: one player starts the assignment (R6), then the *Lala Barina* hunt is joined the vanilla way. Traces from both PCs give the vanilla join path that F1 will automate. | Kit v0 |
-| **S1 · Early-join experiment** | Phase 1 (R8) | Can a linked player enter the leader's story mission before the gate? Record client and server responses. | Kit v0.1 |
-| **S2 · Side channel** | Phase 2 | Handshake, heartbeat/RTT, version-mismatch handling, reconnect | First mod build |
+| **S0 · Setup & link check** | Now (kit v0.2) | REFramework, probe and mod test build run on PC-B. Private Link Party across countries works. **Mod connection between the PCs (Phase 2 exit check, Part 2b).** Is Environment Link available at the pair point (progress 250, see below)? If yes: what happens to it when one player starts a story assignment (R6). Script: [`SESSION-00.md`](../../tools/tester-kit/SESSION-00.md) | Kit v0.2: REFramework + read-only probe + mod test build |
+| **S0b · Linked story baseline** | After S0 (+ solo catch-up homework if Environment Link was refused) | At "Forest Findings" (Ch. 1-3, `001080`), with Environment Link on: one player starts the assignment (R6), then the *Lala Barina* hunt is joined the vanilla way. Traces from both PCs give the vanilla join path that F1 will automate. | Kit v0.2 |
+| **S1 · Early-join experiment** | Phase 1 (R8) | Can a linked player enter the leader's story mission before the gate? Record client and server responses. | Kit v0.3 |
+| **S2 · Side channel** | Phase 2 | Handshake, heartbeat/RTT, version-mismatch handling, reconnect. The basics are covered by S0 Part 2b; this session adds reconnects, restarts and a forced mismatch | Kit v0.2+ |
 | **S3+ · Features** | Phases 3–7 | F1–F4 acceptance on specific story quests (checklists in `story-matrix.md`) | Mod builds |
 
 **Pair point and Environment Link.** The pair characters stop at progress 250: Chapter 1-2 "Back to Camp" (`001040`)

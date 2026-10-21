@@ -18,8 +18,16 @@ Assert-GameClosed $game.Dir
 Ensure-WriteAccess $game.Dir $PSCommandPath $PSBoundParameters
 
 $data = Get-KitDataDir $game.Dir
-$probe = Join-Path (Join-Path (Join-Path $game.Dir 'reframework') 'autorun') 'seamless_probe.lua'
+$rfDir = Join-Path $game.Dir 'reframework'
+$probe = Join-Path (Join-Path $rfDir 'autorun') 'seamless_probe.lua'
 if (Test-Path -LiteralPath $probe) { Remove-Item -LiteralPath $probe -Force; Say 'Removed the research probe.' 'Green' }
+$modItems = @((Join-Path $rfDir 'autorun\seamless_coop.lua'), (Join-Path $rfDir 'autorun\seamless_coop'),
+              (Join-Path $rfDir 'plugins\seamless_net.dll'))
+$removedMod = $false
+foreach ($item in $modItems) {
+    if (Test-Path -LiteralPath $item) { Remove-Item -LiteralPath $item -Recurse -Force; $removedMod = $true }
+}
+if ($removedMod) { Say 'Removed the Seamless Co-op test build.' 'Green' }
 
 # Use the OLDEST install manifest: it describes what was there before the kit was first installed.
 $manifests = @(Get-ChildItem -LiteralPath $data -Filter 'install-*.json' -ErrorAction SilentlyContinue | Sort-Object Name)

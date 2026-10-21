@@ -1,7 +1,7 @@
 # Shared helpers for the Seamless Co-op tester kit. Dot-sourced by install.ps1, uninstall.ps1 and collect-logs.ps1.
 # Must run on Windows PowerShell 5.1 (no PowerShell 7-only syntax).
 
-$KitVersion = 'v0'
+$KitVersion = 'v0.2'
 $AppId = '2246340'
 $ExpectedBuild = '24705561'      # Steam build of Monster Hunter Wilds this kit was tested with
 $RefTag = 'nightly-01433-d4611aef1d63effd3a736bdf9404ea702428017d'
@@ -106,9 +106,33 @@ function Get-Sha256([string]$Path) {
 }
 
 function New-ZipFromDir([string]$SourceDir, [string]$ZipPath) {
-    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    Add-Type -AssemblyName System.IO.Compression, System.IO.Compression.FileSystem
     if (Test-Path -LiteralPath $ZipPath) { Remove-Item -LiteralPath $ZipPath -Force }
-    [System.IO.Compression.ZipFile]::CreateFromDirectory($SourceDir, $ZipPath, [System.IO.Compression.CompressionLevel]::Optimal, $false)
+    $root = (Resolve-Path -LiteralPath $SourceDir).Path.TrimEnd('\') + '\'
+    # Entry names use '/' (Windows PowerShell 5.1's ZipFile.CreateFromDirectory may write '\').
+    $archive = [System.IO.Compression.ZipFile]::Open($ZipPath, 'Create')
+    try {
+        foreach ($f in Get-ChildItem -LiteralPath $SourceDir -Recurse -File) {
+            $entry = $f.FullName.Substring($root.Length).Replace('\', '/')
+            [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive, $f.FullName, $entry,
+                [System.IO.Compression.CompressionLevel]::Optimal)
+        }
+    } finally {
+        $archive.Dispose()
+    }
+}
+
+# Copies every file under $SourceDir into $DestDir, keeping relative paths. Returns the number of files.
+function Copy-Tree([string]$SourceDir, [string]$DestDir) {
+    $root = (Resolve-Path -LiteralPath $SourceDir).Path.TrimEnd('\') + '\'
+    $n = 0
+    foreach ($f in Get-ChildItem -LiteralPath $SourceDir -Recurse -File) {
+        $dst = Join-Path $DestDir $f.FullName.Substring($root.Length)
+        New-Item -ItemType Directory -Force -Path (Split-Path $dst -Parent) | Out-Null
+        Copy-Item -LiteralPath $f.FullName -Destination $dst -Force
+        $n++
+    }
+    return $n
 }
 
 function Test-WriteAccess([string]$Dir) {

@@ -1,17 +1,21 @@
-# Seamless Co-op — tester kit v0
+# Seamless Co-op — tester kit v0.2
 
-Thank you for helping! This kit prepares your game for our test sessions. It installs two things:
+Thank you for helping! This kit prepares your game for our test sessions. It installs three things:
 
 1. **REFramework**: a widely used mod loader for Capcom games (it's a file called `dinput8.dll` in the game folder).
 2. **The research probe**: a small script that **only watches** what the game does during co-op and writes it to a log file.
    It **never changes** the game, your saves, your quests or your rewards.
+3. **The Seamless Co-op test build**: an early version of the mod itself. It **doesn't change gameplay yet**. It shows a
+   status panel, copies your save files to a backup folder each time the game starts, and tests the mod's private
+   connection to the developer's game. That connection sends small messages through Steam, only to Steam friends in
+   your Link Party who also have the mod.
 
-The kit also makes a **backup copy of your save files** first, just in case. It never edits them.
+The kit also makes a **backup copy of your save files** right away, just in case. Nothing ever edits them.
 
 ## Before you start
 
 - **Account risk.** Any mod in an online game carries a small risk. Capcom has suspended players for *changing quest
-  data*. This kit doesn't change anything, it only watches. Still, we can't promise zero risk. If you're not
+  data*. This kit doesn't change any game data or gameplay. Still, we can't promise zero risk. If you're not
   comfortable with that, please don't install it, and that's completely fine.
 - **Use your test character** (the one in the spare save slot), not your main character.
 - It takes about 5 minutes. You need an internet connection; the kit downloads REFramework (13 MB) from GitHub.
@@ -45,11 +49,17 @@ install.cmd "D:\SteamLibrary\steamapps\common\MonsterHunterWilds"
 3. Press **Insert** on your keyboard. The REFramework menu opens.
 4. Open **Script Generated UI** > **Seamless Co-op probe 0.1.3**. It should say something like
    `Hooks: 360 ok, 0 failed`. If it shows *NOT WRITING* or *failed* hooks, take a screenshot for the developer.
-5. Press **Insert** again to close the menu.
-6. Press **F8** once. A small white message appears in the top-left corner: *"Probe: mark #1 saved"*. 
+5. In the same place, open **Seamless Co-op 0.1.0-dev**. It should say `Game build: 24705561 (verified)` and
+   `Save backup: done`. The **Link Party** part lists your party members; the developer shows as
+   `modded - compatible` once you're both in the same Link Party.
+6. Press **Insert** again to close the menu.
+7. Press **F8** once. A small white message appears in the top-left corner: *"Probe: mark #1 saved"*.
 
 **F8 = bookmark.** During sessions the developer will ask you to press F8 at certain moments. It just puts a bookmark in
 the log so we can find those moments later. Pressing it too often or at the wrong time is no problem.
+
+**Ctrl+F12 = the mod's off switch.** It turns the test build's connection off (and on again). Use it if the developer
+asks, or if anything seems wrong.
 
 ## After each session: send your logs
 
@@ -57,13 +67,13 @@ the log so we can find those moments later. Pressing it too often or at the wron
 2. Double-click **`collect-logs.cmd`** in the kit folder.
 3. It creates a zip on your **Desktop** called `seamless-coop-logs-<date>.zip`. Send that file to the developer.
 
-The logs contain game function names and numbers only. The kit also removes your Windows user name, computer name and
-Steam ID from them before zipping.
+The logs contain game function names, numbers and the mod's status messages only. The kit also removes your Windows
+user name, computer name and Steam ID from them before zipping.
 
 ## Uninstall
 
-Close the game and double-click **`uninstall.cmd`**. It removes the probe and puts back whatever `dinput8.dll` you had
-before (or removes it if there was none). Your save backups and logs stay in
+Close the game and double-click **`uninstall.cmd`**. It removes the probe and the test build, and puts back whatever
+`dinput8.dll` you had before (or removes it if there was none). Your save backups and logs stay in
 `<game folder>\reframework\data\seamless_coop\` until you delete that folder.
 
 ## Troubleshooting
@@ -74,4 +84,4 @@ before (or removes it if there was none). Your save backups and logs stay in
 | A black window opens and closes immediately | Right-click `install.cmd` > *Show more options* > *Run as administrator*. If that doesn't help, send a photo of the window. |
 | You see a red **STOPPED:** message | Read it. It says what to do. Send a photo of the window to the developer if unsure. |
 | You use other mods | Tell the developer which ones before the session. ReShade is fine. Other mods that use `dinput8.dll` are replaced (and backed up) by the kit. |
-| You want your save backup | It's in `<game folder>\reframework\data\seamless_coop\save_backups\`. Ask the developer before restoring anything. |
+| You want your save backup | The kit's own backup (made at install) is in `<game folder>\reframework\data\seamless_coop\kit_save_backups\`. The test build adds one in `...\save_backups\` each time the game starts (the last 10 are kept). Ask the developer before restoring anything. |

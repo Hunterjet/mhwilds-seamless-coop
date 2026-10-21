@@ -2,9 +2,9 @@
 
 | | |
 |---|---|
-| **Goal** | (1) REFramework and the probe work on both PCs. (2) A private Link Party works between our two countries. (3) Find out whether **Environment Link** (exploring together) is available at our current story point, and what happens to it when one of us starts a story assignment. |
+| **Goal** | (1) REFramework, the probe and the mod test build work on both PCs. (2) A private Link Party works between our two countries. (3) The mod's own connection works between our PCs (Phase 2 check). (4) Find out whether **Environment Link** (exploring together) is available at our current story point, and what happens to it when one of us starts a story assignment. |
 | **Length** | About 30–45 minutes, live on a voice call. Possibly followed by solo "homework" (see Part 4). |
-| **Kit** | Tester kit v0 (REFramework + read-only probe 0.1.3). Developer: probe 0.1.3 loaded (*Script Generated UI* shows `0.1.3`). |
+| **Kit** | Tester kit v0.2 (REFramework + read-only probe 0.1.3 + Seamless Co-op test build 0.1.0-dev). Developer: the same probe and test build (`tools/deploy.ps1 -Probe -Mod`), `dev_selftest` off. |
 | **Characters** | Both on the **test character**. Story point: Chapter 1-2. **"Back to Camp" is finished** (the game has put you in an online lobby) and the next assignment, **"The Beginning"**, is shown but not played yet. |
 
 > Assignment names below are the English ones. If your game is in another language, use the chapter numbers instead
@@ -35,6 +35,20 @@ This first shared mark lets us line up the two logs later.
 
 **Expected:** the Link Party works. Environment Link may be **refused** at this story point: the game introduces it a
 little later, in Chapter 1-3 ("To the Forest"). A refusal is a useful result too.
+
+## Part 2b — Seamless Co-op connection (5 min)
+
+You need to be Steam friends and in the same Link Party for this.
+
+| Step | Developer (PC-A) | Tester (PC-B) |
+|---|---|---|
+| 2b.1 | Insert > Script Generated UI > **Seamless Co-op** > **Link Party**. Read out what it says about the tester. | Same: what does it say next to the developer's name? Expected: `modded - compatible - <number> ms`. |
+| 2b.2 | Press **Ctrl+F12** (mod off). **F8**. | Within a few seconds the developer should show `mod turned off`. **F8** when you see it. |
+| 2b.3 | Press **Ctrl+F12** again (mod on). | The developer goes back to `modded - compatible`. |
+| 2b.4 | Watch the tester's line. | Now you press **Ctrl+F12** twice (off, wait 5 seconds, on). |
+
+If it says `not a Steam friend in game (no side channel)` or stays at `no reply yet`, take a screenshot. That's
+useful too, so don't spend more than 5 minutes on it.
 
 ## Part 3 — only if Environment Link worked (15–20 min)
 
@@ -72,7 +86,9 @@ assignment, and the *Lala Barina* hunt joined the normal (unmodded) way.
 ```
 S0 checklist
 - Probe line after start (Hooks: ... ok, ... failed): 
+- Seamless Co-op panel: game build line, save backup line: 
 - Link Party worked (yes/no): 
+- Mod connection (Part 2b): what the panel said about the developer; did off/on show up on the other side? 
 - Could see the developer's character before Environment Link (yes/no/where): 
 - Environment Link: worked / refused. Exact message (or screenshot): 
 - If it worked: what happened when the developer started "The Beginning"? 
@@ -82,6 +98,12 @@ S0 checklist
 ```
 
 ## Developer notes (not for the tester)
+
+- Part 2b is the Phase 2 exit check. Both `logs\session-N.log` should show `party: 2 member(s), 1 friend(s) in game,
+  1 matched by name` (or `paired by fallback`, which means `OnlineId` isn't the Steam persona name: note it in
+  game-model §4.1), then `peer ...xxxx: pending -> compatible`. Kill switch: `-> left` on the other side, then back to
+  `compatible`. The tester's first launch also logs a `selftest:` line (the kit enables `dev_selftest`). Its
+  `steam_self=compatible` result proves their Steam relay path works on its own.
 
 - Align traces by the Part 1 shared mark (`k = "mark"`, `utc` field) and look at the marks between steps.
 - R6 questions: does `Net_Party.leaveLinkPartySync(…, LEAVE_StoryEvent)` fire on the starter's PC, the joiner's PC, or

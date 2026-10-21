@@ -58,7 +58,7 @@ if ($game.SteamDir) {
         foreach ($acct in Get-ChildItem -LiteralPath $userdata -Directory -ErrorAction SilentlyContinue) {
             $remote = Join-Path (Join-Path $acct.FullName $AppId) 'remote'
             if (Test-Path -LiteralPath $remote) {
-                $dst = Join-Path (Join-Path (Join-Path $data 'save_backups') $stamp) ('account-' + $acct.Name.Substring([Math]::Max(0, $acct.Name.Length - 4)))
+                $dst = Join-Path (Join-Path (Join-Path $data 'kit_save_backups') $stamp) ('account-' + $acct.Name.Substring([Math]::Max(0, $acct.Name.Length - 4)))
                 New-Item -ItemType Directory -Force -Path $dst | Out-Null
                 Copy-Item -Path (Join-Path $remote '*') -Destination $dst -Recurse -Force
                 $saveCopies += $dst
@@ -106,17 +106,34 @@ New-Item -ItemType Directory -Force -Path $autorun, (Join-Path $data 'traces') |
 Copy-Item -LiteralPath (Join-Path $PSScriptRoot 'seamless_probe.lua') -Destination (Join-Path $autorun 'seamless_probe.lua') -Force
 Say 'Installed the research probe.' 'Green'
 
-# 5) Manifest for uninstall/support
+# 5) Seamless Co-op test build (status panel, save backup at each launch, side-channel test; no gameplay changes)
+$modFiles = 0
+$modSrc = Join-Path (Join-Path $PSScriptRoot 'mod') 'reframework'
+if (Test-Path -LiteralPath $modSrc) {
+    $oldModDir = Join-Path $autorun 'seamless_coop'
+    if (Test-Path -LiteralPath $oldModDir) { Remove-Item -LiteralPath $oldModDir -Recurse -Force }
+    $modFiles = Copy-Tree $modSrc (Join-Path $game.Dir 'reframework')
+    $cfg = Join-Path $data 'config.json'
+    if (-not (Test-Path -LiteralPath $cfg)) {
+        # Test builds check their own connection through Steam once per launch (one line in the mod's log).
+        Set-Content -LiteralPath $cfg -Value '{ "dev_selftest": true }' -Encoding ASCII
+    }
+    Say 'Installed the Seamless Co-op test build.' 'Green'
+}
+
+# 6) Manifest for uninstall/support
 $manifest = [ordered]@{
     kit = $KitVersion; installedUtc = $stamp; gameBuild = $game.Build
     dinput8 = [ordered]@{ existedBefore = $hadDinput; previousSha256 = $prevSha; replaced = $installedRef; backup = $(if ($hadDinput) { Join-Path $backupDir 'dinput8.dll' } else { $null }) }
     saveBackups = $saveCopies
     probe = (Join-Path $autorun 'seamless_probe.lua')
+    modFiles = $modFiles
 }
 $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $data "install-$stamp.json") -Encoding UTF8
 
 Say ''
 Say 'All done!' 'Green'
 Say 'Next: start Monster Hunter Wilds from Steam as usual. In the game, press Insert to open the REFramework menu, open'
-Say '"Script Generated UI" > "Seamless Co-op probe": it should say "Hooks: ... ok". Press Insert again to close the menu.'
+Say '"Script Generated UI": "Seamless Co-op probe" should say "Hooks: ... ok", and "Seamless Co-op" should say'
+Say '"Game build: 24705561 (verified)". Press Insert again to close the menu.'
 if (-not $NoPause) { [void](Read-Host 'Press Enter to close this window') }

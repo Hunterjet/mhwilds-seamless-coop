@@ -22,7 +22,12 @@ New-Item -ItemType Directory -Force -Path $staging | Out-Null
 
 $files = @()
 $files += @(Get-ChildItem -LiteralPath (Join-Path $data 'traces') -Filter '*.jsonl' -ErrorAction SilentlyContinue)
+$files += @(Get-ChildItem -LiteralPath (Join-Path $data 'logs') -Filter '*.log' -ErrorAction SilentlyContinue)
 $files += @(Get-ChildItem -LiteralPath $data -Filter 'install-*.json' -ErrorAction SilentlyContinue)
+foreach ($n in 'diagnostics.json', 'config.json') {
+    $p = Join-Path $data $n
+    if (Test-Path -LiteralPath $p) { $files += @(Get-Item -LiteralPath $p) }
+}
 foreach ($n in 're2_framework_log.txt', 're2_framework_log.prev.txt') {
     $p = Join-Path $game.Dir $n
     if (Test-Path -LiteralPath $p) { $files += @(Get-Item -LiteralPath $p) }
