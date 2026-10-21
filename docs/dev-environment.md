@@ -126,3 +126,8 @@ peers (buttons for compatible, mismatched and silent peers on a simulated 150 ms
 **Unattended check:** `"dev_selftest": true` makes the mod log one `selftest:` line 8 s after start. Verified result on
 PC-A (2026-10-21): every loopback case as expected, plus `steam_self=compatible rtt≈420ms` (a real Steam round trip
 to itself). Turn it off again for normal play.
+
+**CI (prepared, not active yet):** `tools/ci/github-ci.yml` builds the plugin and runs both test suites on
+`windows-latest`. GitHub rejects workflow files pushed with a token that lacks the `workflow` scope. To enable it:
+`tools\dev\gh.ps1 auth refresh -h github.com -s workflow` (interactive device login), then
+`git mv tools/ci/github-ci.yml .github/workflows/ci.yml`, commit and push.
