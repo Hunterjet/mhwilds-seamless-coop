@@ -4,8 +4,10 @@ Play Monster Hunter Wilds' **main story together from the first step of every st
 fight small monsters and watch story cutscenes as one party — instead of soloing to each quest's cutscene and regrouping
 through SOS.
 
-> **Status: research & planning complete; implementation not started.** Nothing here is playable yet.
-> Inspired by [Elden Ring Seamless Co-op](https://www.nexusmods.com/eldenring/mods/510) and
+> **Status: early development (Phase 2 of 8).** Nothing here is playable yet. The groundwork is done: the in-game
+> panel, build checks, save backups at launch, and a private Steam side channel through which modded party members
+> recognise each other. The story features come next. Inspired by
+> [Elden Ring Seamless Co-op](https://www.nexusmods.com/eldenring/mods/510) and
 > [MHW Seamless Co-op](https://www.nexusmods.com/monsterhunterworld/mods/8805).
 
 ## Planned scope (v1.0)
@@ -18,7 +20,22 @@ through SOS.
 - **In-game panel**: party/mod status, settings, diagnostics.
 
 Requirements (planned): PC (Steam), latest game version, [REFramework](https://github.com/praydog/REFramework).
-**Everyone in the party needs the mod.** No crossplay with consoles in seamless mode.
+**Everyone in the party needs the mod and must be Steam friends with each other.** No crossplay with consoles in
+seamless mode.
+
+## Building from source
+
+Windows, VS 2022 Build Tools (MSVC x64), CMake ≥ 3.25, Ninja. In a *x64 Native Tools* / vcvars64 shell:
+
+```
+cmake --preset release
+cmake --build --preset release
+ctest --preset release
+```
+
+The first configure downloads the pinned REFramework plugin header and its Lua 5.4.3 sources, plus Catch2. Layout:
+`src/lua/` (the REFramework Lua mod), `src/plugin/` (`seamless_net.dll`), `tests/`. Developers deploy with
+`tools/deploy.ps1 -Mod`; see [docs/dev-environment.md](docs/dev-environment.md).
 
 ## Documentation
 

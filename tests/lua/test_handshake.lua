@@ -167,6 +167,34 @@ t.test("handshake: removing a candidate says BYE and forgets it", function()
     t.eq(e.pb().bye_reason, "left_party")
 end)
 
+t.test("handshake: reliable and unreliable messages have separate sequence spaces", function()
+    local e = pair()
+    e.run(1.0)
+    e.b_ticks = false
+    e.run(0.5) -- let B's in-flight messages land
+    local stale0 = e.A.stats.stale
+    e.eb:send("loop:a", assert(protocol.encode("HEARTBEAT", e.B.seq.u + 100, 2, { st = "busy", story = 250, t = 5 }, nil, true)), false)
+    e.run(0.3)
+    e.eb:send("loop:a", assert(protocol.encode("BYE", e.B.seq.r + 1, 2, { reason = "shutdown" })), true)
+    e.run(0.3)
+    t.eq(e.A.stats.stale, stale0, "the reliable BYE was not mistaken for a stale message")
+    t.eq(e.pa().state, "left")
+end)
+
+t.test("handshake: an older unreliable message is dropped", function()
+    local e = pair()
+    e.run(1.0)
+    e.b_ticks = false
+    e.run(0.5)
+    local useq, stale0 = e.B.seq.u, e.A.stats.stale
+    e.eb:send("loop:a", assert(protocol.encode("HEARTBEAT", useq + 10, 2, { st = "busy", story = 250, t = 5 }, nil, true)), false)
+    e.run(0.3)
+    e.eb:send("loop:a", assert(protocol.encode("HEARTBEAT", useq + 5, 2, { st = "quest", story = 250, t = 6 }, nil, true)), false)
+    e.run(0.3)
+    t.eq(e.A.stats.stale, stale0 + 1)
+    t.eq(e.pa().remote_state.st, "busy")
+end)
+
 t.test("handshake: summary counts states", function()
     local e = pair()
     e.run(1.0)

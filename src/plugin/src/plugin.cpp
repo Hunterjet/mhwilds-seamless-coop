@@ -292,10 +292,15 @@ int l_send(lua_State* L) {
     std::size_t len = 0;
     const char* data = lua_tolstring(L, 2, &len);
     const bool reliable = lua_isnoneornil(L, 3) || lua_toboolean(L, 3) != 0;
-    const auto err = g_channel->send(id, std::string_view{data, len}, reliable);
+    int steam_result = 0;
+    const auto err = g_channel->send(id, std::string_view{data, len}, reliable, &steam_result);
     if (err != Channel::SendError::None) {
         lua_pushboolean(L, 0);
-        lua_pushstring(L, Channel::to_string(err));
+        if (err == Channel::SendError::SteamError) {
+            lua_pushfstring(L, "%s (EResult %d)", Channel::to_string(err), steam_result);
+        } else {
+            lua_pushstring(L, Channel::to_string(err));
+        }
         return 2;
     }
     lua_pushboolean(L, 1);
@@ -377,7 +382,7 @@ extern "C" __declspec(dllexport) bool reframework_plugin_initialize(const REFram
     g_fns = param->functions;
     g_fns->on_lua_state_created(on_lua_state_created);
     g_fns->on_lua_state_destroyed(on_lua_state_destroyed);
-    log_info("[seamless_net] %s loaded (Lua %s)", kPluginVersion, LUA_RELEASE);
+    log_info("[seamless_net] %s loaded (%s)", kPluginVersion, LUA_RELEASE);
     std::thread{backup_worker}.detach();
     return true;
 }

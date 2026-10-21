@@ -54,6 +54,7 @@ It is inspired by [Elden Ring Seamless Co-op](https://www.nexusmods.com/eldenrin
 | C4 | On an unknown/unsupported game build, or if required game types/methods are missing, the mod **disables itself** (vanilla behaviour) and says why. |
 | C5 | Coexists with ReShade, RenoDX, Fluffy Mod Manager PAK mods and typical REFramework scripts. Mods that change the same systems (e.g. auto-join/SOS mods) are detected and reported. |
 | C6 | English first; all strings externalized for later localization in the game's languages. |
+| C7 | **Party members must be Steam friends** for the mod's side channel (v1). The game exposes no Steam IDs for Link Party members, so the mod finds them among the player's Steam friends who are in the game, then verifies each one in the handshake via their hunter ID ([game-model §4.1](re/game-model.md)). Members who aren't friends play vanilla. |
 
 ## 5. Concepts and terminology
 

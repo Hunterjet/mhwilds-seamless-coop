@@ -32,7 +32,14 @@ These rules add to `C:\src\AGENTS.md` (machine-wide rules: personal files, crede
   (`.gitattributes`). Test against a fake Steam layout with `-SteamDir`/`-GameDir`/`-OutDir`/`-NoPause`, never the real game folder.
 - Start Copilot CLI inside this repo so `.mcp.json` (reframework, ghidra) and `.github/lsp.json` load.
 - RE: map types with `tools/dev/re-typemap.ps1` (output stays in `.research-cache/`); record verified facts in `docs/re/game-model.md`.
-- Deploy with `tools/deploy.ps1`. Lua hot-reloads via REFramework "Reset Scripts"; the DLL needs a game restart.
+- Deploy with `tools/deploy.ps1` (`-Mod`, `-Mod -LuaOnly`, `-Probe`). Lua hot-reloads via REFramework "Reset Scripts";
+  the DLL needs a game restart. Close the game with `Process.CloseMainWindow()` (never kill it), relaunch with
+  `steam://rungameid/2246340`. Unattended in-game check: `"dev_selftest": true` in the game's
+  `reframework\data\seamless_coop\config.json` → one `selftest:` line in `logs\session-N.log` (turn it off afterwards).
+- Build/test (vcvars64 shell): `cmake --preset release`, `cmake --build --preset release`, `ctest --preset release`.
+  Lua-only: `build\release\tests\lua_runner.exe tests\lua\run.lua .` Lint: LuaLS `--check src\lua --configpath .luarc.json`.
+- seamless_net.dll must be compiled against REFramework's own Lua sources at the pinned commit (RefDeps.cmake); when
+  REFramework is updated, bump `REF_COMMIT` and rebuild. Lua bindings must never raise Lua errors (return nil, err).
 - Docs with Mermaid: run `node tools/web-research/check-mermaid.mjs <file.md>` before committing. Never use `;` in
   sequence/state diagram text (Mermaid treats it as a line break).
 - Commits: include the `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` trailer.

@@ -17,6 +17,10 @@ function M.data_store()
     }
     store.io = {
         open = function(path, mode)
+            if tostring(mode):sub(1, 1) == "r" then
+                if store.files[path] == nil then return nil, path .. ": No such file or directory" end
+                return { close = function() end, read = function() return "" end }
+            end
             local buf = {}
             store.files[path] = buf
             return {

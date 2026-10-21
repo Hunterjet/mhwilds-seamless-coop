@@ -23,6 +23,7 @@ Logs: `C:\src\.cache\logs\toolchain-install.log`. Downloads and package caches s
 | REFramework → **nightly-01433** (`d4611ae`) | Only `dinput8.dll` from `REFramework.zip` (per release notes). Old DLL backed up to `reframework\backups\dinput8.dll.v1.5.9.1+438-28e7be7.bak`. |
 | REFramework **C# API** | `csharp-api.zip` → `reframework\plugins\` (REFramework.NET runtime; needs .NET 10). |
 | **re-engine-mcp** game plugin (dev only) | `reframework\plugins\source\TestWebAPI.cs` + `WebAPI\` — compiled by REFramework at launch; serves `http://localhost:8899` only. |
+| **Seamless Co-op dev build** | `reframework\autorun\seamless_coop.lua` + `seamless_coop\`, `reframework\plugins\seamless_net.dll` (+ `.pdb`), data in `reframework\data\seamless_coop\`. Installed/removed with `tools\deploy.ps1 -Mod [-Remove]` (§9). |
 
 Everything is listed in `reframework\backups\CHANGES-seamless-coop-dev.txt`.
 **First launch after installing the C# API shows a long black screen.** REFramework.NET generates .NET reference
@@ -101,3 +102,27 @@ Keep it low-volume. Nexus Mods and Reddit pages render without login; old.reddit
   REFramework menu → ScriptRunner → **Reset scripts**.
 - While playing: **F8** adds a mark (a short "Probe: mark #N saved" toast confirms it). Optional label text and a
   pause switch are in the REFramework menu under "Seamless Co-op probe".
+
+## 9. Building, testing and deploying the mod
+
+| Step | Command (repo root, vcvars64 shell for CMake) |
+|---|---|
+| Configure (once) | `cmake --preset release` → `build\release\` (downloads REFramework's `API.h` + Lua 5.4.3 sources at `d4611ae`, upstream `lua.c`, Catch2 v3.8.1) |
+| Build | `cmake --build --preset release` → `src\plugin\seamless_net.dll`, `tests\lua_runner.exe`, `tests\plugin_tests.exe` |
+| Test | `ctest --preset release` (Lua + C++), or `build\release\tests\lua_runner.exe tests\lua\run.lua . [test_name]` |
+| Lint | `lua-language-server --check src\lua --checklevel=Warning --configpath .luarc.json` |
+| Deploy | `tools\deploy.ps1 -Mod` (game closed: DLL + Lua) · `-Mod -LuaOnly` (game running; then Reset scripts) · `-Mod -Remove` |
+
+In the game folder the mod is `reframework\autorun\seamless_coop.lua` + `reframework\autorun\seamless_coop\` +
+`reframework\plugins\seamless_net.dll` (+ `.pdb` for dev builds). Its data lives in
+`reframework\data\seamless_coop\`: `config.json`, `logs\session-1..5.log` (rotating), `save_backups\<UTC stamp>\`
+(the last 10 launches) and `diagnostics.json` (written by the panel's button or the selftest).
+
+**In-game panel:** REFramework menu (Insert) → Script Generated UI → **Seamless Co-op**. It shows the kill switch
+(Ctrl+F12), game build and verification, versions, side channel and save backup status, Link Party members with
+their mod status and RTT, and diagnostics. With `"dev_tools": true` in `config.json` it also shows loopback test
+peers (buttons for compatible, mismatched and silent peers on a simulated 150 ms link).
+
+**Unattended check:** `"dev_selftest": true` makes the mod log one `selftest:` line 8 s after start. Verified result on
+PC-A (2026-10-21): every loopback case as expected, plus `steam_self=compatible rtt≈420ms` (a real Steam round trip
+to itself). Turn it off again for normal play.

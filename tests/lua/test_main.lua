@@ -200,8 +200,10 @@ t.test("main: dev_selftest reports every test peer's outcome in the log", functi
     t.ok(found:find("old_mod=incompatible%(mod_version%)"), found)
     t.ok(found:find("silent=pending"), found)
     t.ok(found:find("wrong_identity=incompatible%(identity%)"), found)
+    t.ok(found:find("steam_self=pending"), found) -- the fake plugin never delivers to self
     t.ok(w.store.files["seamless_coop/diagnostics.json"])
     t.eq(next(w.app.fakes), nil)
+    t.eq(next(w.app.link.peers), nil)
 end)
 
 t.test("main: the log rotates through five session files across restarts", function()

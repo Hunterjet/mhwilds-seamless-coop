@@ -44,6 +44,12 @@ end
 local function json_store(env, path)
     return {
         load = function()
+            -- json.load_file logs an error for missing files, so check existence first.
+            if env.io then
+                local okf, fh = pcall(env.io.open, path, "r")
+                if not okf or not fh then return nil end
+                pcall(fh.close, fh)
+            end
             local ok, v = pcall(env.json.load_file, path)
             if ok and type(v) == "table" then return v end
             return nil
@@ -137,7 +143,7 @@ function M.write_diagnostics(app)
 end
 
 function M.start(env)
-    local app = { env = env, fakes = {}, members = {} }
+    local app = { env = env, fakes = {}, members = {}, pinned = {} }
 
     local cfg = config.new(json_store(env, DATA .. "config.json"))
     if not json_store(env, DATA .. "config.json").load() then cfg:save() end
@@ -252,10 +258,18 @@ function M.start(env)
                 local okf, f = pcall(net.friends_in_game)
                 if okf and type(f) == "table" then friends = f end
             end
-            local wanted = discovery.match(members, friends)
+            local wanted, match_info = discovery.match(members, friends)
+            local summary = string.format("%d member(s), %d friend(s) in game, %d matched by name, %d paired by fallback",
+                #members, #friends, match_info.by_name, match_info.guessed)
+            if summary ~= app.discovery_summary then
+                app.discovery_summary = summary
+                logger:info("party: %s", summary)
+            end
             for id, meta in pairs(wanted) do app.link:add_candidate(id, meta) end
             for id in pairs(app.link.peers) do
-                if id:sub(1, 5) ~= "loop:" and not wanted[id] then app.link:remove_candidate(id, "left_party") end
+                if id:sub(1, 5) ~= "loop:" and not wanted[id] and not app.pinned[id] then
+                    app.link:remove_candidate(id, "left_party")
+                end
             end
         end)
     end
@@ -285,25 +299,42 @@ function M.start(env)
         end)
     end
 
-    -- Unattended check of the handshake inside the game's Lua runtime (dev_selftest, off by default).
+    -- Unattended check of the handshake inside the game's Lua runtime (dev_selftest, off by default). Besides the
+    -- loopback test peers it adds our own Steam ID as a candidate: if Steam delivers messages to self, the full
+    -- Steam path (plugin, relay, handshake) is exercised on one PC.
     if cfg:get("dev_selftest") then
+        local self_id
         sched:after("selftest_start", 1.0, function()
             for _, kind in ipairs({ "compatible", "old_mod", "other_build", "old_protocol", "wrong_identity", "silent" }) do
                 M.add_fake(app, kind)
             end
+            if net then
+                local ok, id = pcall(net.local_id)
+                if ok and type(id) == "string" then
+                    self_id = id
+                    app.pinned[id] = true
+                    app.link:add_candidate(id, { label = "self (Steam loop)" })
+                end
+            end
         end)
         sched:after("selftest_report", 8.0, function()
             local parts = {}
-            for id, f in pairs(app.fakes) do
-                local p = app.link.peers[id]
-                parts[#parts + 1] = string.format("%s=%s%s%s", f.kind, p.state,
+            local function describe(name, p)
+                parts[#parts + 1] = string.format("%s=%s%s%s%s", name, p.state,
                     #p.reasons > 0 and ("(" .. table.concat(p.reasons, ",") .. ")") or "",
-                    p.clock.rtt_avg and string.format(" rtt=%dms", math.floor(p.clock.rtt_avg + 0.5)) or "")
+                    p.clock.rtt_avg and string.format(" rtt=%dms", math.floor(p.clock.rtt_avg + 0.5)) or "",
+                    p.last_send_error and (" send_error=" .. tostring(p.last_send_error)) or "")
             end
+            for id, f in pairs(app.fakes) do describe(f.kind, app.link.peers[id]) end
+            if self_id and app.link.peers[self_id] then describe("steam_self", app.link.peers[self_id]) end
             table.sort(parts)
             logger:info("selftest: %s", table.concat(parts, "; "))
             M.write_diagnostics(app)
             M.remove_fakes(app)
+            if self_id then
+                app.pinned[self_id] = nil
+                app.link:remove_candidate(self_id, "left_party")
+            end
         end)
     end
 

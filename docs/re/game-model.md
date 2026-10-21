@@ -89,6 +89,24 @@ until mission `001070` is cleared (→ 6). Then 8 = `001080` hunt accepted, 10 =
   `_Dic : Dictionary<int, Action<cPacketArg>>`, `_IsReceiveLoadBeforeSyncPacket`, `IsQuestJoinFailedLoading`.
 - Session types: `app.net_session_manager.SESSION_TYPE { NONE, LOBBY, QUEST, LINK, MEMORIES, LOCAL }`.
 
+### 4.1 Member identity — R5 (✅ answered, 2026-10-21)
+
+- Members per session: `NetworkManager.get_UserInfoManager()` → `Net_UserInfoManager.getUserInfoList(SESSION_TYPE)` →
+  `Net_UserInfoList._ListInfo : Net_UserInfo[]` (also fields `_mlInfo` lobby, `_mlkInfo` link, `_mqInfo` quest,
+  `_mmInfo` memories). Per member (`Net_UserInfo`): `get_IsValid`, `get_IsSelf`, `get_HunterId : Guid`, `get_UserId : Guid`,
+  `get_ShortHunterId`, `get_PlName` (hunter name), `get_OnlineId : String`, `get_PlatformId : Byte` (the local Steam
+  player had 5; crossplay console players 2), `get_MemberIndex`, `get_MemberListProgressId`, `get_IsPartyMember`,
+  `get_IsPartySync`, `get_UniqueId : via.network.utility.UniqueId`.
+- **No Steam ID is exposed.** `OnlineId` is the platform display name (4–13 characters, never numeric).
+  `UniqueId` is an opaque native object: `get_Hash()` is a 64-bit hash (18–19 digits, not a SteamID64) and
+  `get_ServiceType()` 2 or 4. `NetworkManager.SelfNetworkUniqueIdString()` was empty while offline. Values were only
+  inspected as shapes (length/pattern), never recorded.
+- **Decision (side channel):** seamless_net lists the player's Steam friends who are in the game (`ISteamFriends`,
+  AppID 2246340) and matches their persona name to the member's `OnlineId`. If exactly one member and one friend are
+  left over, they're paired as well. The HELLO handshake then proves identity: the peer must present the member's
+  hunter ID. Consequence: **the side channel needs Link Party members to be Steam friends** (v1). Verified in game:
+  the Steam path works end to end (the selftest's self-loop reached "compatible", RTT ≈ 420 ms).
+
 ## 5. Quest director (✅ API)
 
 `app.cQuestDirector` (via `MissionManager.get_QuestDirector()`): `acceptQuest(cActiveQuestData, cQuestAcceptArg, bool, bool)`,

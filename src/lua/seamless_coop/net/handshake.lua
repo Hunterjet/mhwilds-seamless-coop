@@ -61,7 +61,7 @@ function M.new(opts)
         cfg = cfg,
         inst = opts.inst or math.random(1, 0x7FFFFFFF),
         proto = opts.proto, -- protocol override, only for loopback test peers
-        seq = 0,
+        seq = { r = 0, u = 0 }, -- separate sequence spaces for reliable and unreliable messages
         peers = {},
         enabled = true,
         stats = { rx = 0, tx = 0, tx_failed = 0, invalid = 0, stale = 0, unknown_sender = 0, not_ready = 0 },
@@ -113,7 +113,7 @@ function Link:add_candidate(id, meta)
         next_hello = now,
         hello_interval = self.cfg.hello_retry_s,
         next_heartbeat = now,
-        last_seq = -1,
+        last_seq = { r = -1, u = -1 },
         rx = 0,
         invalid = 0,
     }
@@ -138,8 +138,10 @@ function Link:remove_candidate(id, reason)
 end
 
 function Link:send(p, mtype, d, reliable)
-    self.seq = self.seq + 1
-    local bytes, err = protocol.encode(mtype, self.seq, self.inst, d, self.proto)
+    local unreliable = reliable == false
+    local stream = unreliable and "u" or "r"
+    self.seq[stream] = self.seq[stream] + 1
+    local bytes, err = protocol.encode(mtype, self.seq[stream], self.inst, d, self.proto, unreliable)
     if not bytes then
         log(self, "error", "peer %s: cannot encode %s: %s", p.log_id, mtype, err)
         return false
@@ -209,13 +211,14 @@ function Link:on_packet(from, data, now)
     end
     if msg.i ~= p.remote_inst then
         p.remote_inst = msg.i
-        p.last_seq = -1
+        p.last_seq = { r = -1, u = -1 }
     end
-    if msg.s <= p.last_seq then
+    local stream = msg.u == 1 and "u" or "r"
+    if msg.s <= p.last_seq[stream] then
         self.stats.stale = self.stats.stale + 1
         return
     end
-    p.last_seq = msg.s
+    p.last_seq[stream] = msg.s
     p.last_rx = now
     p.rx = p.rx + 1
     self.stats.rx = self.stats.rx + 1

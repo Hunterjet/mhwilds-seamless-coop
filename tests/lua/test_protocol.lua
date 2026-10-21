@@ -62,6 +62,14 @@ t.test("protocol: unknown fields are ignored for forward compatibility", functio
     t.ok(protocol.decode(s))
 end)
 
+t.test("protocol: unreliable messages are flagged u = 1; other flag values are rejected", function()
+    local s = assert(protocol.encode("HEARTBEAT", 3, 1, { st = "idle", story = 1, t = 1 }, nil, true))
+    t.eq(assert(protocol.decode(s)).u, 1)
+    t.eq(assert(protocol.decode(assert(protocol.encode("BYE", 3, 1, { reason = "shutdown" })))).u, nil)
+    local bad = assert(json.encode({ p = protocol.VERSION, t = "BYE", s = 1, i = 1, u = 2, d = { reason = "shutdown" } }))
+    t.no(protocol.decode(bad))
+end)
+
 t.test("protocol: NOTICE args must be short scalars", function()
     t.ok(protocol.encode("NOTICE", 1, 1, { code = "join_refused", args = json.array({ "behind", 250, true }) }))
     t.no(protocol.encode("NOTICE", 1, 1, { code = "bad code!", args = json.array({}) }))

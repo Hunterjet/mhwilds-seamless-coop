@@ -178,35 +178,57 @@ stateDiagram-v2
 
 ## 7. Native plugin design (`seamless_net.dll`)
 
-- **Scaffold:** start from the REFramework plugin pattern (`reframework_plugin_initialize`, `on_lua_state_created`). Use
-  [Prof9/REF-Plugin-Template](https://github.com/Prof9/REF-Plugin-Template) or praydog's `examples/example_plugin`.
-  REFramework headers, sol2 and Lua come from the pinned REFramework commit (nightly-01433 `d4611ae`) via CMake
-  FetchContent. **The Lua version must match REFramework's.**
-- **Lua API** (registered into REFramework's Lua state under `API::LuaLock`):
+> **Built in Phase 2 (2026-10-21)** and verified in game: loads under REFramework nightly-01433, binds Steam, runs the
+> save backup and passes a Steam self-loop handshake. Source: `src/plugin/`, tests: `tests/plugin/`.
+
+- **Scaffold:** REFramework's C plugin API only (`include/reframework/API.h`: `reframework_plugin_required_version`,
+  `reframework_plugin_initialize`, `on_lua_state_created/destroyed`, `log_*`, `lock_lua/unlock_lua`). No sol2: the
+  bindings use the raw Lua C API and **never raise Lua errors** (they return `nil, err`), so no `longjmp` crosses C++
+  frames.
+- **Lua must match REFramework exactly.** The plugin works on REFramework's `lua_State` with its own copy of Lua, so
+  CMake downloads REFramework's vendored **Lua 5.4.3** sources from the pinned commit (`d4611ae`) and compiles them as C,
+  like REFramework does (`src/plugin/cmake/RefDeps.cmake`). Their headers match upstream 5.4.3 (`ldebug.c`/`lvm.c` differ).
+  REFramework exports no Lua symbols, so linking against it isn't an option.
+- **Lua API** (global table `seamless_net`, registered when REFramework creates the script state, i.e. before autorun scripts):
   ```lua
-  seamless_net.version()                       -- plugin + protocol version
-  seamless_net.local_id()                      -- own SteamID64 as string
-  seamless_net.send(steam_id, payload, reliable) -> ok, err
-  seamless_net.poll(max)                       -- { {from=steam_id, data=payload}, ... }
-  seamless_net.close(steam_id)
-  seamless_net.backup_saves(keep) -> ok, info   -- copies win64_save to reframework/data/seamless_coop/save_backups
-  seamless_net.status()                        -- relay/session diagnostics
+  seamless_net.version()          -- { plugin, api, channel }
+  seamless_net.status()           -- { steam, reason?, relay, sent, received, dropped_*, allowed, backup = {state, message, folder, files, bytes} }
+  seamless_net.local_id()         -- own SteamID64 string, or nil, err
+  seamless_net.game_build()       -- Steam build ID (ISteamApps::GetAppBuildId), e.g. 24705561
+  seamless_net.friends_in_game()  -- { {id, name}, ... } Steam friends currently in Monster Hunter Wilds
+  seamless_net.allow(id, on)      -- allow-list (only verified party candidates)
+  seamless_net.send(id, data, reliable) -> true | false, err ("... (EResult n)")
+  seamless_net.poll(max)          -- { {from, data}, ... } from allow-listed peers only
+  seamless_net.close(id)
   ```
-- **Steam binding:** at init, `GetModuleHandle("steam_api64.dll")`, then resolve the **flat API** exports by name. Probe
-  interface versions present in the game's DLL:
-  `SteamAPI_SteamNetworkingMessages_SteamAPI_v00x`, `SteamAPI_ISteamNetworkingMessages_SendMessageToUser`,
-  `…_ReceiveMessagesOnChannel`, `…_CloseSessionWithUser`, `SteamAPI_SteamNetworkingMessage_t_Release`,
-  `SteamAPI_SteamNetworkingIdentity_SetSteamID64`, `SteamAPI_SteamUser_v0xx` + `SteamAPI_ISteamUser_GetSteamID`.
-  We declare only these signatures ourselves; **no Steamworks SDK files are redistributed**. A missing export (e.g. a
-  DLC unlocker replaced the DLL) disables the channel with a clear message, as MHW's mod learned.
-- **Threading:** all calls happen on the game thread from Lua (`poll` each frame, non-blocking). There are no background
-  threads, except the save backup which runs once on a worker thread at plugin load.
-- **Validation:** payload ≤ 4 KB; senders must be on the Lua-provided allow-list (verified party members); per-peer rate limiting.
-- **Build:** CMake + Ninja + MSVC v143 (VS 2022 Build Tools), C++20, `/W4`, static CRT, no packers. Reproducible release builds in CI.
+- **Steam binding:** `GetModuleHandle("steam_api64.dll")` + `GetProcAddress` on the flat API. The game's DLL exports
+  `SteamAPI_SteamUser_v021`, `SteamAPI_SteamFriends_v017`, `SteamAPI_SteamApps_v008`,
+  `SteamAPI_SteamNetworkingMessages_SteamAPI_v002`, `SteamAPI_SteamNetworkingUtils_SteamAPI_v004` and the
+  `SteamAPI_ISteam*` methods used (checked with `dumpbin /exports`); accessors are probed newest-first. Struct layouts
+  (`SteamNetworkingIdentity` 136 B packed, `SteamNetworkingMessage_t` 216 B) are declared locally with `static_assert`s,
+  checked against Valve's BSD-licensed GameNetworkingSockets headers. **No Steamworks SDK files are redistributed.** A
+  missing export disables the channel with the export's name in the message.
+- **Channel:** Steam Networking Messages channel 2246; reliable sends use `Reliable | AutoRestartBrokenSession`.
+  Pending sessions are accepted only for allow-listed peers (re-checked about once a second), so no callbacks are
+  needed (the game owns `SteamAPI_RunCallbacks`).
+- **Threading:** Steam networking calls happen on the game thread from Lua (`poll` each frame, non-blocking). The save
+  backup runs once on a detached worker thread at plugin load. It waits for Steam, finds the save folder with
+  `ISteamUser::GetUserDataFolder` (…`/2246340/local` → sibling `remote`) and copies it. Rotation deletes only
+  timestamp-named folders.
+- **Validation:** payload ≤ 4 KB both ways; allow-list; per-peer token buckets (30 msg/s, burst 60) in and out.
+- **Build:** CMake presets + Ninja + MSVC v143 (VS 2022 Build Tools), C++20, `/W4 /permissive-`, static CRT,
+  `/OPT:REF /OPT:ICF`, no packers. Depends only on `KERNEL32.dll`.
 
 ## 8. Mod protocol
 
-JSON objects (REFramework's `json` module) wrapped in a small envelope:
+> **Phase 2 status:** `HELLO`, `HELLO_ACK`, `HEARTBEAT`, `BYE` and `NOTICE` are implemented (`src/lua/seamless_coop/net/`).
+> The envelope is `{ "p": protocol, "t": type, "s": seq, "i": instance, "u": 1 if unreliable, "d": payload }`.
+> Reliable and unreliable messages use separate sequence spaces, because Steam orders reliable messages but not
+> unreliable ones relative to them. `i` changes whenever a game session starts, so a restarted peer is
+> recognised. `HELLO`, `HELLO_ACK` and `BYE` are frozen: any protocol version can decode them and report a mismatch.
+> Payloads are validated against per-type schemas; unknown fields are ignored.
+
+JSON objects (the mod's own strict codec, `core/json.lua`) wrapped in a small envelope:
 `{ "p": <protocol>, "t": "<type>", "s": <seq>, "m": <mission seq>, "d": { … } }`.
 
 | Type | Direction | Payload (main fields) | Purpose |
@@ -323,10 +345,16 @@ events (lockstep), and the mod automates the vanilla regroup at the gate. That i
 
 ## 11. Development workflow
 
-- **Build:** `cmake --preset release` → `ninja` builds `seamless_net.dll` and the Lua test runner.
-- **Deploy (dev):** `tools/deploy.ps1` copies `src/lua/**` to `<game>\reframework\autorun\` and the DLL to
-  `<game>\reframework\plugins\`. It writes only inside `reframework\` (user-approved scope) and refuses to replace the
-  DLL while the game runs. Lua changes hot-reload via REFramework's **Reset Scripts**.
+- **Build:** in a vcvars64 shell, `cmake --preset release` then `cmake --build --preset release`. This builds
+  `seamless_net.dll`, `lua_runner.exe` (Lua 5.4.3 interpreter from REFramework's sources) and `plugin_tests.exe`.
+  `ctest --preset release` runs both suites. Lua only: `build\release\tests\lua_runner.exe tests\lua\run.lua .`
+- **Deploy (dev):** `tools/deploy.ps1 -Mod` copies `src/lua/**` to `<game>\reframework\autorun\` and the DLL to
+  `<game>\reframework\plugins\` (`-LuaOnly` for Lua alone, `-Remove` to uninstall). It writes only inside
+  `reframework\` (user-approved scope) and refuses to replace the DLL while the game runs. Lua changes hot-reload via
+  REFramework's **Reset Scripts**.
+- **Unattended in-game check:** set `"dev_selftest": true` in `reframework\data\seamless_coop\config.json`. Eight
+  seconds after start, the session log gets one `selftest:` line. It covers six loopback test peers (compatible,
+  mod/build/protocol mismatch, wrong identity, silent) plus a Steam self-loop through the real side channel.
 - **Live inspection:** start the game (REFramework nightly + C# API) → re-engine-mcp listens on `localhost:8899` →
   start Copilot CLI **inside the repo** so the project `.mcp.json` loads → use the `reframework` tools (read-only first).
   re-engine-mcp is **dev-only**: it can call any game method (including sending chat), so remove its plugin source from
@@ -352,7 +380,7 @@ events (lockstep), and the mod automates the vanilla regroup at the gate. That i
 |---|---|---|
 | **0 · Foundations** *(done)* | Toolchain, REFramework nightly + C# API, re-engine-mcp, Ghidra/GhidraMCP, LSP, research & planning docs, GitHub repo | ✅ Game boots with the new REFramework; re-engine-mcp answers live queries; repo public at `Hunterjet/mhwilds-seamless-coop`. Carried into Phase 1: SDK dump + LuaLS stubs. |
 | **1 · RE spike** | Answer R1–R8. Single-PC first, then sessions S0/S1 with the remote tester (tester kit v0) | `docs/re/game-model.md` + H1/H2 decision + registry draft. |
-| **2 · Skeleton & side channel** | Lua skeleton (core/compat/net/ui), `seamless_net.dll`, handshake, heartbeat, panel party view, loopback transport, kill switch | Two PCs show each other as "modded · compatible"; messages round-trip; a forced build mismatch disables cleanly. |
+| **2 · Skeleton & side channel** | Lua skeleton (core/compat/net/ui), `seamless_net.dll`, handshake, heartbeat, panel party view, loopback transport, kill switch | Two PCs show each other as "modded · compatible"; messages round-trip; a forced build mismatch disables cleanly. **Status 2026-10-21: built and verified on one PC.** In game: build gate, Steam binding, save backup, loopback test peers, and a Steam self-loop reaching "compatible". Tests: 84 Lua, 20 C++. Remaining: the two-PC check with the remote tester (S2, can be folded into S0b). |
 | **3 · F1 MVP** | Seamless join for **one** Chapter 1 story quest end-to-end; eligibility; late join; save backups | Spec F1 acceptance on that quest; both saves progress correctly. |
 | **4 · F2 segments** | Presence, travel catch-up, dialogue, objectives, NPC sync | Spec F2 acceptance on representative quests of Ch. 1–2. |
 | **5 · F3 cutscenes** | Barrier, start, vote-skip, end recovery; per-cutscene notes | Spec F3 acceptance on 5+ cutscenes. |

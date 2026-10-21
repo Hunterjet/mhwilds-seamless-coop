@@ -1,6 +1,6 @@
--- Side-channel protocol: JSON envelope { p = protocol, t = type, s = seq, i = instance, d = payload } with strict,
--- per-type schemas (implementation plan §8, spec N4). HELLO, HELLO_ACK and BYE are frozen: they must stay decodable
--- by every protocol version, so peers can always report a version mismatch.
+-- Side-channel protocol: JSON envelope { p = protocol, t = type, s = seq, i = instance, u = 1 if unreliable,
+-- d = payload } with strict, per-type schemas (implementation plan §8, spec N4). HELLO, HELLO_ACK and BYE are frozen:
+-- they must stay decodable by every protocol version, so peers can always report a version mismatch.
 local json = require("seamless_coop.core.json")
 local version = require("seamless_coop.core.version")
 
@@ -102,11 +102,13 @@ function M.validate(mtype, d)
 end
 
 -- Returns the wire string, or nil + error. `inst` identifies this game session (changes on restart).
--- `proto` overrides the protocol version (loopback test peers only).
-function M.encode(mtype, seq, inst, d, proto)
+-- `proto` overrides the protocol version (loopback test peers only). Unreliable messages carry u = 1 and use their
+-- own sequence space: Steam orders reliable messages but not unreliable ones relative to them.
+function M.encode(mtype, seq, inst, d, proto, unreliable)
     local err = M.validate(mtype, d or {})
     if err then return nil, "encode " .. mtype .. ": " .. err end
-    local s, jerr = json.encode({ p = proto or M.VERSION, t = mtype, s = seq, i = inst, d = d or {} })
+    local s, jerr = json.encode({ p = proto or M.VERSION, t = mtype, s = seq, i = inst, u = unreliable and 1 or nil,
+                                  d = d or {} })
     if not s then return nil, jerr end
     if #s > M.MAX_BYTES then return nil, "encode " .. mtype .. ": message too large" end
     return s
@@ -123,6 +125,7 @@ function M.decode(bytes)
     if type(msg.t) ~= "string" or #msg.t > 24 then return nil, "bad type field" end
     if math.type(msg.s) ~= "integer" or msg.s < 0 then return nil, "bad sequence field" end
     if math.type(msg.i) ~= "integer" then return nil, "bad instance field" end
+    if msg.u ~= nil and msg.u ~= 1 then return nil, "bad unreliable flag" end
     if msg.p ~= M.VERSION and not M.FROZEN[msg.t] then return nil, "protocol mismatch" end
     local verr = M.validate(msg.t, msg.d)
     if verr then return nil, msg.t .. ": " .. verr end
