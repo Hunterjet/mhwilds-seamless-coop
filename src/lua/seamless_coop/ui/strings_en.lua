@@ -1,0 +1,31 @@
+-- English UI strings (spec F6). Kept separate so translations can be added later.
+return {
+    title = "Seamless Co-op",
+    on = "On",
+    off = "Off (vanilla behaviour)",
+    disabled = "Disabled - unsupported game version",
+    enabled_checkbox = "Enabled",
+    build_verified = "verified",
+    build_unverified = "not verified for this mod version (read-only features only)",
+    build_unknown = "unknown (seamless_net.dll not loaded)",
+    no_plugin = "seamless_net.dll is not loaded: the side channel is off. Install it in reframework/plugins.",
+    party_none = "Not in a Link Party.",
+    party_header = "Link Party",
+    peer_states = {
+        pending = "no reply yet (not modded?)",
+        compatible = "modded - compatible",
+        incompatible = "modded - incompatible",
+        lost = "connection lost",
+        left = "mod turned off",
+    },
+    reasons = {
+        protocol = "different protocol version",
+        mod_version = "different mod version",
+        game_build = "different game version",
+        identity = "identity check failed",
+    },
+    you = "you",
+    dev_header = "Developer tools (loopback test peers)",
+    diag_header = "Diagnostics",
+    log_header = "Recent log",
+}
