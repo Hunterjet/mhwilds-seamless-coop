@@ -89,3 +89,15 @@ Keep it low-volume. Nexus Mods and Reddit pages render without login; old.reddit
 - **Black screen for minutes on first launch after a game or REFramework update:** expected; see §2.
 - **`reframework` MCP tools fail with "pipe not connected" or a connection error:** the game isn't running, or the
   re-engine-mcp plugin isn't installed. It only answers while the game runs.
+- **GitHub shows "Unable to render rich display" for a diagram:** run
+  `cd tools\web-research; node check-mermaid.mjs ..\..\docs\<file>.md` to see the parse error locally (headless Edge +
+  Mermaid 11). Common cause: a `;` inside sequence-diagram text.
+
+## 8. Research probe (read-only)
+
+- `re/probes/seamless_probe.lua` logs calls to selected game methods plus changes in key state to
+  `<game>\reframework\data\seamless_coop\traces\trace-<UTC>.jsonl`. It never changes the game.
+- Install/update: `tools\deploy.ps1 -Probe`; remove: `tools\deploy.ps1 -Probe -Remove`. After deploying, use
+  REFramework menu → ScriptRunner → **Reset scripts**.
+- While playing: **F8** adds a mark (a short "Probe: mark #N saved" toast confirms it). Optional label text and a
+  pause switch are in the REFramework menu under "Seamless Co-op probe".

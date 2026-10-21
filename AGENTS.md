@@ -29,4 +29,6 @@ These rules add to `C:\src\AGENTS.md` (machine-wide rules: personal files, crede
 - Start Copilot CLI inside this repo so `.mcp.json` (reframework, ghidra) and `.github/lsp.json` load.
 - RE: map types with `tools/dev/re-typemap.ps1` (output stays in `.research-cache/`); record verified facts in `docs/re/game-model.md`.
 - Deploy with `tools/deploy.ps1`. Lua hot-reloads via REFramework "Reset Scripts"; the DLL needs a game restart.
+- Docs with Mermaid: run `node tools/web-research/check-mermaid.mjs <file.md>` before committing. Never use `;` in
+  sequence/state diagram text (Mermaid treats it as a line break).
 - Commits: include the `Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>` trailer.

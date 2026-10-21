@@ -229,7 +229,7 @@ sequenceDiagram
   participant L as Leader (game + mod)
   participant F as Follower (game + mod)
   participant S as Capcom / PlayFab services
-  Note over L,F: Same Link Party; HELLO handshake already compatible
+  Note over L,F: Same Link Party, HELLO handshake already compatible
   L->>L: hook — main mission MS… starts
   L->>F: MISSION_INTENT {mission, storyPoint}
   F->>F: eligibility (same point / helper / behind)
@@ -238,7 +238,7 @@ sequenceDiagram
   L->>F: JOIN_INFO {session ids, host GUID, quest id}
   F->>S: game API — joinSession(...)
   S-->>F: joined
-  F->>F: accept quest / restore mission; spawn near leader
+  F->>F: accept quest / restore mission, spawn near leader
   F->>L: JOINED
   loop while in quest
     L-->>F: SEGMENT_STATE (keyframes + deltas)
